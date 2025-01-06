@@ -1,0 +1,24 @@
+{
+  "name": "handoff-hubspot",
+  "version": "0.0.1",
+  "description": "A simple CLI toolchain for fetching handoff components and transpiling them into hubspot modules",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "fetch": "node dist/index.js",
+    "start": "http-server ./"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "handlebars": "^4.7.8",
+    "http-server": "^14.1.1",
+    "prettier": "^3.4.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}
