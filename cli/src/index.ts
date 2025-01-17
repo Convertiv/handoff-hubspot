@@ -72,6 +72,7 @@ const buildMeta = (component: HandoffComponent) => {
     smart_type: "NOT_SMART",
     tags: component.tags,
   };
+  return metadata;
 };
 
 /**
@@ -86,8 +87,11 @@ const buildModule = async (componentId: string) => {
   const pretty = await prettier.format(template, { parser: "html" });
   writeToFile(pretty, `${componentId}/module.html`);
   writeToFile(component.css, `${componentId}/module.css`);
-  writeToFile(component.js, `${componentId}/module.js`);
-  writeToFile(JSON.stringify(buildMeta(component)), `${componentId}/meta.json`);
+  if (component.js) writeToFile(component.js, `${componentId}/module.js`);
+  writeToFile(
+    JSON.stringify(buildMeta(component), null, 2),
+    `${componentId}/meta.json`
+  );
   writeToFile(
     JSON.stringify(buildFields(component.properties), null, 2),
     `${componentId}/fields.json`
@@ -138,7 +142,6 @@ const transformDefault = (property: any) => {
  * @returns
  */
 const buildFields = (properties: any) => {
-  console.log(properties);
   const fields = Object.keys(properties).map((key: string) => {
     const property = properties[key];
     let map = {
@@ -176,11 +179,15 @@ const writeToFile = async (template: string, id: string) => {
   if (!fs.existsSync(`components/${dirName}`)) {
     fs.mkdirSync(`components/${dirName}`);
   }
-  fs.writeFile(`components/${id}`, template, (err: any) => {
-    if (err) {
-      console.error(err);
-    }
-  });
+  if (template) {
+    fs.writeFile(`components/${id}`, template, (err: any) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+  } else {
+    console.error("No template found for ", id);
+  }
 };
 
 /**

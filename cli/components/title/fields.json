@@ -1,0 +1,18 @@
+[
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": true,
+    "default": "Section header"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": true,
+    "default": "long example"
+  }
+]

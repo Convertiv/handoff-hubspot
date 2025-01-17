@@ -1,0 +1,14 @@
+{
+  "label": "Title",
+  "css_assets": [],
+  "external_js": [],
+  "global": true,
+  "help_text": "This is how SS&C presents title information across the platform. The title is presented in dark black text, while the title prefix is shown in lighter gray.",
+  "content_types": [
+    "PAGE"
+  ],
+  "js_assets": [],
+  "other_assets": [],
+  "smart_type": "NOT_SMART",
+  "tags": []
+}

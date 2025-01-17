@@ -7,7 +7,7 @@
  * @date 2021-09-01
  */
 /* =============================================================================
-   HERO (shared/blocks/_hero.scss)
+   HERO (blocks/_hero.scss)
    ========================================================================== */
 .hero {
   padding-top: 5rem;
@@ -16,43 +16,26 @@
   contain: paint;
   overflow-x: clip;
 }
-@media (min-width: 992px) {
-  .hero {
-    padding-top: 11.875rem;
-  }
-}
 
-@media (max-width: 767.98px) {
-  .hero-content {
+@media (max-width: 991.98px) {
+  .hero-inner {
     text-align: center;
   }
 }
 
 .hero-breadcrumb {
-  margin-bottom: 0.625rem;
+  margin-bottom: 1.25rem;
 }
-@media (max-width: 767.98px) {
+@media (max-width: 991.98px) {
   .hero-breadcrumb .breadcrumb {
     justify-content: center;
   }
 }
 
 .hero-title span {
-  color: #0d6efd;
+  color: #0077c8;
 }
 
-.hero-typed-text {
-  font-weight: inherit;
-}
-.hero-typed-text span {
-  padding-right: 0.125rem;
-  border-right: 0.125rem solid;
-  animation: blink 1s linear infinite;
-}
-
-.hero-lead {
-  margin-bottom: 2.5rem;
-}
 @media (min-width: 768px) {
   .hero-lead {
     font-size: 1.125rem;
@@ -65,9 +48,17 @@
   column-gap: 2.5rem;
   row-gap: 1.25rem;
 }
+@media (max-width: 991.98px) {
+  .hero-cta {
+    justify-content: center;
+  }
+}
 
-@media (max-width: 767.98px) {
+.hero-media img {
+  border-radius: 0.625rem;
+}
+@media (max-width: 991.98px) {
   .hero-media {
-    margin-top: 1.25rem;
+    margin-top: 2.5rem;
   }
 }

@@ -1,0 +1,119 @@
+<section class="hero u-relative">
+  <div class="background">
+    {% if backgroundVideo %}
+    <video playsinline="" autoplay="" muted="" loop="">
+      <source src="{{ backgroundVideo }}" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+
+    {% endif %} {% if backgroundImage %}
+
+    <picture>
+      <source srcset="{{ backgroundImage }}" />
+      <img src="{{ src }}" alt="{{ alt }}" />
+    </picture>
+
+    {% endif %}
+  </div>
+  <div class="hero-inner">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-12 col-lg-6 pe-lg-5">
+          <div class="hero-content">
+            <nav class="hero-breadcrumb" aria-label="breadcrumb">
+              <ul class="breadcrumb">
+                {% for b in breadcrumb %}
+                <li class="breadcrumb-item{% if active %} active {% endif %}">
+                  <a
+                    href="{{ b.url }}"
+                    aria-label="{{ b.label }}"
+                    {%
+                    if
+                    active
+                    %}
+                    aria-current="page"
+                    {%
+                    endif
+                    %}
+                    >{{ b.label }}</a
+                  >
+                </li>
+                {% endfor %}
+              </ul>
+            </nav>
+            <h1 class="hero-title h2">
+              {{ title_prefix }} <br /><span>{{ title }}</span>
+            </h1>
+            <p class="hero-lead">{{ lead }}</p>
+            {% if primary %}
+            <div class="hero-cta mt-lg-2">
+              <div>
+                <a
+                  href="{{ url }}"
+                  target="_self"
+                  class="btn btn-primary"
+                  aria-label="{{ label }}"
+                >
+                  <span class="link-icon link-icon-arrow">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      fill="none"
+                    >
+                      <path
+                        fill="#0D1116"
+                        d="M.285 12.877a.4.4 0 0 1-.001-.567L10.593 1.994h-8.49a.4.4 0 0 1-.4-.4V.4c0-.22.18-.4.4-.4H14v11.899a.4.4 0 0 1-.396.4l-1.193.012a.4.4 0 0 1-.404-.4V3.4L1.697 13.717a.4.4 0 0 1-.565 0l-.847-.841Z"
+                      ></path>
+                    </svg>
+                  </span>
+                  {{ label }}
+                </a>
+              </div>
+
+              {% endif %}{% if secondary %}
+              <div>
+                <a
+                  href="{{ url }}"
+                  target="_blank"
+                  class="btn btn-outline"
+                  aria-label="{{ label }}"
+                >
+                  <span class="link-icon link-icon-arrow">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      fill="none"
+                    >
+                      <path
+                        fill="#0D1116"
+                        d="M.285 12.877a.4.4 0 0 1-.001-.567L10.593 1.994h-8.49a.4.4 0 0 1-.4-.4V.4c0-.22.18-.4.4-.4H14v11.899a.4.4 0 0 1-.396.4l-1.193.012a.4.4 0 0 1-.404-.4V3.4L1.697 13.717a.4.4 0 0 1-.565 0l-.847-.841Z"
+                      ></path>
+                    </svg>
+                  </span>
+                  {{ label }}
+                </a>
+              </div>
+
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if image %}
+        <div class="col-12 col-lg-6 ps-lg-5">
+          <div class="hero-media">
+            <img
+              width="670"
+              class="mw-lg-none"
+              src="{{ src }}"
+              alt="{{ alt }}"
+            />
+          </div>
+        </div>
+
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>

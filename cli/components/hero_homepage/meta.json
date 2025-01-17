@@ -1,0 +1,18 @@
+{
+  "label": "Hero - Homepage",
+  "css_assets": [],
+  "external_js": [],
+  "global": true,
+  "help_text": "This block should be used at the top of landing pages to highlight important content. These blocks take the full screen, and the animation will draw attention to the text.",
+  "content_types": [
+    "PAGE"
+  ],
+  "js_assets": [],
+  "other_assets": [],
+  "smart_type": "NOT_SMART",
+  "tags": [
+    "header",
+    "hero",
+    "landing"
+  ]
+}

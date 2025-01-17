@@ -1,0 +1,98 @@
+[
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": false,
+    "default": [
+      {
+        "label": "Previous",
+        "url": "#",
+        "active": false
+      },
+      {
+        "label": "Current",
+        "url": "#",
+        "active": true
+      }
+    ]
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": false,
+    "default": "Main heading",
+    "validation_regex": "^[a-zA-Z0-9 ]+$"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": true,
+    "default": "longer example.",
+    "validation_regex": "^[a-zA-Z0-9 ]+$"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": true,
+    "default": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pharetra, ex eu fringilla scelerisque, massa justo dapibus quam, in ultricies mi tellus non augue.",
+    "validation_regex": "^[a-zA-Z0-9 ]+$"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": true,
+    "default": {
+      "label": "Primary CTA",
+      "url": "#"
+    },
+    "validation_regex": "^[a-zA-Z0-9 ]+$"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": true,
+    "default": {
+      "label": "Secondary CTA",
+      "url": "#"
+    },
+    "validation_regex": "^[a-zA-Z0-9 ]+$"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": false,
+    "default": "https://www.intralinks.com/sites/default/files/videos/Inner_1_nobg.mp4"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": false,
+    "default": "https://picsum.photos/800"
+  },
+  {
+    "type": "text",
+    "locked": false,
+    "responsive": true,
+    "resizable": true,
+    "required": true,
+    "default": {
+      "src": "https://placehold.co/1340x860"
+    }
+  }
+]
