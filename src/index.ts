@@ -1,26 +1,34 @@
+#!/usr/bin/env node
 import axios from "axios";
 import fs from "fs";
 import transpile from "./transpile";
 import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 import * as prettier from "prettier";
-import path from "path";
+import path, { parse } from "path";
+import { createConfigCommand, readConfig } from "./config/command";
 
-const url = "https://stage-ssc.handoff.com/api/";
-const headers = {
-  "Content-Type": "application/json",
+const init = async () => {
+  readConfig();
+  const url = "https://stage-ssc.handoff.com/api/";
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  const request = axios.create({
+    baseURL: url,
+    headers,
+  });
+  return request;
 };
-const request = axios.create({
-  baseURL: url,
-  headers,
-});
 
 /**
  * Fetch shared styles from handoff api
  */
 const fetchSharedStyles: () => Promise<void> = async () => {
+  const request = await init();
   try {
     const response = await request.get("component/shared.css");
-    writeToFile(response.data, `shared.css`);
+    writeSharedCss(response.data, `uds.css`);
   } catch (e) {
     console.error(e);
   }
@@ -35,6 +43,7 @@ const fetchComponent: (
   componentId: string
 ) => Promise<HandoffComponentResponse> = async (componentId: string) => {
   try {
+    const request = await init();
     const response = await request.get(`component/${componentId}.json`);
     // Parse response and create a web component from response
     return response.data;
@@ -85,16 +94,19 @@ const buildModule = async (componentId: string) => {
   const component = data.latest;
   const template = transpile(component.code);
   const pretty = await prettier.format(template, { parser: "html" });
-  writeToFile(pretty, `${componentId}/module.html`);
-  writeToFile(component.css, `${componentId}/module.css`);
-  if (component.js) writeToFile(component.js, `${componentId}/module.js`);
-  writeToFile(
+  writeToModuleFile(pretty, componentId, `module.html`);
+  writeToModuleFile(component.css, componentId, `module.css`);
+  if (!component.js) component.js = "/**\n * This file is blank\n */";
+  writeToModuleFile(component.js, componentId, `module.js`);
+  writeToModuleFile(
     JSON.stringify(buildMeta(component), null, 2),
-    `${componentId}/meta.json`
+    componentId,
+    `meta.json`
   );
-  writeToFile(
+  writeToModuleFile(
     JSON.stringify(buildFields(component.properties), null, 2),
-    `${componentId}/fields.json`
+    componentId,
+    `fields.json`
   );
   return template;
 };
@@ -169,24 +181,46 @@ const buildFields = (properties: any) => {
  * @param template
  * @param id
  */
-const writeToFile = async (template: string, id: string) => {
+const writeToModuleFile = async (
+  template: string,
+  id: string,
+  name: string
+) => {
   // ensure dir exists
-  if (!fs.existsSync("components")) {
-    fs.mkdirSync("components");
-  }
-  const dirName = path.dirname(id);
-  // ensure dir exists
-  if (!fs.existsSync(`components/${dirName}`)) {
-    fs.mkdirSync(`components/${dirName}`);
+  const targetPath = `modules/${id}.module`;
+  if (!fs.existsSync(targetPath)) {
+    fs.mkdirSync(targetPath, { recursive: true });
   }
   if (template) {
-    fs.writeFile(`components/${id}`, template, (err: any) => {
+    fs.writeFile(`${targetPath}/${name}`, template, (err: any) => {
       if (err) {
         console.error(err);
       }
     });
   } else {
-    console.error("No template found for ", id);
+    console.error("No template found for ", name);
+  }
+};
+
+/**
+ * Write a file to the file system
+ * @param template
+ * @param id
+ */
+const writeSharedCss = async (template: string, name: string) => {
+  // ensure dir exists
+  const targetPath = `css`;
+  if (!fs.existsSync(targetPath)) {
+    fs.mkdirSync(targetPath, { recursive: true });
+  }
+  if (template) {
+    fs.writeFile(`${targetPath}/${name}`, template, (err: any) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+  } else {
+    console.error("No template found for ", name);
   }
 };
 
@@ -194,14 +228,31 @@ const writeToFile = async (template: string, id: string) => {
  * Handle command line arguments
  */
 const main = async () => {
-  const argv = yargs(process.argv.slice(2))
-    .usage("Usage: $0 <componentId>")
-    .demandCommand(1)
-    .help().argv;
-
-  const componentId = argv._[0];
-  fetchSharedStyles();
-  await buildModule(componentId);
+  const argv = yargs(hideBin(process.argv))
+    .command({
+      command: "config",
+      describe: "Build the handoff config",
+      handler: async () => {
+        createConfigCommand();
+      },
+    })
+    .command({
+      command: "styles",
+      describe: "Fetch shared styles from handoff",
+      handler: async () => {
+        fetchSharedStyles();
+      },
+    })
+    .command({
+      command: "fetch [component]",
+      describe: "Fetch a component and transform it to a hubspot component",
+      handler: async (parsed) => {
+        console.log("Fetching component", parsed.component);
+        await buildModule(parsed.component);
+      },
+    })
+    .help()
+    .parse();
 };
 
 main();
