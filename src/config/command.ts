@@ -5,6 +5,7 @@ const defaultConfig = {
   url: "https://stage-ssc.handoff.com/api/",
   cssPath: "css/uds.css",
   modulesPath: "modules",
+  modulePrefix: "uds_",
 };
 
 export const createConfigCommand = async () => {
@@ -40,11 +41,18 @@ export const createConfigCommand = async () => {
     message: "Where should the modules be saved?",
     initial: defaultConfig.modulesPath,
   });
+  const modulePrefix = await prompts({
+    type: "text",
+    name: "value",
+    message: "Do you want to provide a prefix for the modules?",
+    initial: defaultConfig.modulePrefix,
+  });
   const handoffConfig = {
     ...defaultConfig,
     url: url.value,
     cssPath: cssPath.value,
     modulesPath: modulesPath.value,
+    modulePrefix: modulePrefix.value,
   };
   fs.writeFile(
     "handoff.config.json",

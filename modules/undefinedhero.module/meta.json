@@ -1,0 +1,21 @@
+{
+  "label": "Hero",
+  "css_assets": [],
+  "external_js": [],
+  "global": true,
+  "help_text": "This is a hero block that can be used to highlight important content. You can use it on landing pages, or at the top of content pages to give context. This hero contains a title, subtitle, and a call to action button.",
+  "content_types": [
+    "ANY"
+  ],
+  "js_assets": [],
+  "other_assets": [],
+  "smart_type": "NOT_SMART",
+  "tags": [
+    "header",
+    "hero",
+    "landing",
+    "image",
+    "video",
+    "cta"
+  ]
+}

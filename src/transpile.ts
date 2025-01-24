@@ -1,14 +1,21 @@
 import Handlebars from "handlebars";
+import { PropertyDefinition } from "./fields/types";
 
 const iterator: string[] = [];
+let properties: { [key: string]: PropertyDefinition } = {};
+let currentProperty: PropertyDefinition | null = null;
 
 /**
  * Transpile handlebars code to hubspot code
  * @param code string
  * @returns string
  */
-const transpile: (code: string) => string = (code) => {
+const transpile: (
+  code: string,
+  props?: { [key: string]: PropertyDefinition }
+) => string = (code, props) => {
   const parsed = Handlebars.parse(code);
+  if (props) properties = props;
   return program(parsed);
 };
 
@@ -19,20 +26,20 @@ const transpile: (code: string) => string = (code) => {
  */
 const block = (node) => {
   const variable = node.params[0].original.split(".").pop();
+  currentProperty = properties[variable];
+  console.log(variable, currentProperty?.name, currentProperty?.type);
   switch (node.path.original) {
     case "if":
       // check to see if the block has an else block
       if (node.inverse) {
-        return `{% if ${variable} %} \n ${program(node.program)} \n {% else %} \`${program(node.inverse)} \n {% endif %}`;
+        return `{% if module.${variable} %} \n ${program(node.program)} \n {% else %} \`${program(node.inverse)} \n {% endif %}`;
       } else {
-        return `{% if ${variable} %} \n ${program(node.program)} \n {% endif %}`;
+        return `{% if module.${variable} %} \n ${program(node.program)} \n {% endif %}`;
       }
-      break;
     case "each":
       const current = variable[0];
       iterator.push(current);
       return `{% for ${current} in ${variable} %} ${program(node.program)} {% endfor %}`;
-      break;
     default:
       throw new Error(`Unknown block type: '${node.path.original}'`);
   }
@@ -60,8 +67,9 @@ export const program: (program: hbs.AST.Program) => string = (program) => {
         } else if (value.includes("this")) {
           value = value.replace("this.", iterator[iterator.length - 1] + ".");
         } else if (value.includes(".")) {
-          value = value.split(".").pop();
+          value = value.replaceAll("properties", "module");
         }
+        console.log(value);
         buffer.push(`{{ ${value} }}`);
         break;
       case "TextNode":

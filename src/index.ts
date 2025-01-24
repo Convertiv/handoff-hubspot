@@ -7,10 +7,11 @@ import { hideBin } from "yargs/helpers";
 import * as prettier from "prettier";
 import path, { parse } from "path";
 import { createConfigCommand, readConfig } from "./config/command";
+import { buildFields } from "./fields/fields";
 
 const init = async () => {
-  readConfig();
-  const url = "https://stage-ssc.handoff.com/api/";
+  const config = readConfig();
+  const url = config.url;
   const headers = {
     "Content-Type": "application/json",
   };
@@ -75,7 +76,7 @@ const buildMeta = (component: HandoffComponent) => {
     external_js: [],
     global: true,
     help_text: component.description,
-    content_types: ["PAGE"],
+    content_types: ["ANY"],
     js_assets: [],
     other_assets: [],
     smart_type: "NOT_SMART",
@@ -92,7 +93,7 @@ const buildMeta = (component: HandoffComponent) => {
 const buildModule = async (componentId: string) => {
   const data = await fetchComponent(componentId);
   const component = data.latest;
-  const template = transpile(component.code);
+  const template = transpile(component.code, component.properties);
   const pretty = await prettier.format(template, { parser: "html" });
   writeToModuleFile(pretty, componentId, `module.html`);
   writeToModuleFile(component.css, componentId, `module.css`);
@@ -112,71 +113,6 @@ const buildModule = async (componentId: string) => {
 };
 
 /**
- * Transform the handoff type to a hubspot component type
- * @param type
- * @returns
- */
-const transformType: (type: string) => string = (type: string) => {
-  switch (type) {
-    case "string":
-      return "text";
-    case "number":
-      return "number";
-    case "boolean":
-      return "checkbox";
-    case "array":
-      return "select";
-    default:
-      return "text";
-  }
-};
-
-/**
- * Map the default value to a hubspot component default
- * @param property
- * @returns
- */
-const transformDefault = (property: any) => {
-  if (property.default) {
-    if (property.type === "image") {
-      return {
-        src: property.default,
-      };
-    }
-    return property.default;
-  }
-  return null;
-};
-
-/**
- * Build fields from properties
- * @param properties
- * @returns
- */
-const buildFields = (properties: any) => {
-  const fields = Object.keys(properties).map((key: string) => {
-    const property = properties[key];
-    let map = {
-      label: property.title,
-      name: property.id,
-      type: transformType(property.type),
-      locked: false,
-      responsive: true,
-      resizable: true,
-      required: property.rules?.required
-        ? Boolean(property.rules.required)
-        : false,
-      default: transformDefault(property),
-    };
-    if (property.rules?.pattern) {
-      map["validation_regex"] = property.rules.pattern;
-    }
-    return map;
-  });
-  return fields;
-};
-
-/**
  * Write a file to the file system
  * @param template
  * @param id
@@ -187,7 +123,9 @@ const writeToModuleFile = async (
   name: string
 ) => {
   // ensure dir exists
-  const targetPath = `modules/${id}.module`;
+  const config = readConfig();
+  const targetPath = `${config.modulesPath}/${config.modulePrefix}${id}.module`;
+  console.log("Writing module to ", targetPath);
   if (!fs.existsSync(targetPath)) {
     fs.mkdirSync(targetPath, { recursive: true });
   }
@@ -209,7 +147,8 @@ const writeToModuleFile = async (
  */
 const writeSharedCss = async (template: string, name: string) => {
   // ensure dir exists
-  const targetPath = `css`;
+  const config = readConfig();
+  const targetPath = config.cssPath;
   if (!fs.existsSync(targetPath)) {
     fs.mkdirSync(targetPath, { recursive: true });
   }
