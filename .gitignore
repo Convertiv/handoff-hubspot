@@ -20,3 +20,6 @@ acceptance-tests/my-project
 acceptance-tests/*.yml
 acceptance-tests/*.html
 acceptance-tests/test-output
+
+modules
+css

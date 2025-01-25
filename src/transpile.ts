@@ -27,14 +27,13 @@ const transpile: (
 const block = (node) => {
   const variable = node.params[0].original.split(".").pop();
   currentProperty = properties[variable];
-  console.log(variable, currentProperty?.name, currentProperty?.type);
   switch (node.path.original) {
     case "if":
       // check to see if the block has an else block
       if (node.inverse) {
-        return `{% if module.${variable} %} \n ${program(node.program)} \n {% else %} \`${program(node.inverse)} \n {% endif %}`;
+        return `{% if module.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
       } else {
-        return `{% if module.${variable} %} \n ${program(node.program)} \n {% endif %}`;
+        return `{% if module.${variable} %} ${program(node.program)} {% endif %}`;
       }
     case "each":
       const current = variable[0];
@@ -69,7 +68,6 @@ export const program: (program: hbs.AST.Program) => string = (program) => {
         } else if (value.includes(".")) {
           value = value.replaceAll("properties", "module");
         }
-        console.log(value);
         buffer.push(`{{ ${value} }}`);
         break;
       case "TextNode":

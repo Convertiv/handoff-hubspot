@@ -94,7 +94,11 @@ const buildModule = async (componentId: string) => {
   const data = await fetchComponent(componentId);
   const component = data.latest;
   const template = transpile(component.code, component.properties);
-  const pretty = await prettier.format(template, { parser: "html" });
+
+  const pretty = await prettier.format(template, {
+    parser: "jinja-template",
+    plugins: ["prettier-plugin-jinja-template"],
+  });
   writeToModuleFile(pretty, componentId, `module.html`);
   writeToModuleFile(component.css, componentId, `module.css`);
   if (!component.js) component.js = "/**\n * This file is blank\n */";
