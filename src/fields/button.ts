@@ -10,7 +10,10 @@ const buildButtonField = (id: string, property: PropertyDefinition) => {
     url: {
       content_id: "",
       type: "EXTERNAL",
-      href: (property.default.href as string) || "",
+      href:
+        typeof property.default === "object" && "href" in property.default
+          ? property.default?.href
+          : "",
     },
     open_in_new_tab: false,
     no_follow: false,

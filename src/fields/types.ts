@@ -1,4 +1,15 @@
-export type FieldType = "text" | "number" | "checkbox" | "select" | "image";
+export type FieldType =
+  | "text"
+  | "number"
+  | "checkbox"
+  | "select"
+  | "image"
+  | "button"
+  | "link"
+  | "breadcrumb"
+  | "video_file"
+  | "file"
+  | "video_embed";
 export type ComponentType = "element" | "block";
 
 export interface ComponentDefinition {
@@ -18,16 +29,15 @@ export interface PreviewDefinition {
   values: { [key: string]: ValueDefinition };
 }
 
-export interface ValueDefinition {
-  [key: string]:
-    | string
-    | boolean
-    | number
-    | ImageValue
-    | ButtonValue
-    | BreadCrumbValue
-    | LinkValue;
-}
+export type ValueDefinition =
+  | ImageValue
+  | string
+  | boolean
+  | number
+  | ImageValue
+  | ButtonValue
+  | BreadCrumbValue[]
+  | LinkValue;
 
 export interface ImageValue {
   src: string;
@@ -37,6 +47,10 @@ export interface ImageValue {
 export interface ButtonValue {
   label: string;
   url: string;
+  active?: boolean;
+  rel?: string;
+  target?: string;
+  metadata?: "";
 }
 
 export interface LinkValue {
@@ -48,6 +62,9 @@ export interface BreadCrumbValue {
   label: string;
   url: string;
   active: boolean;
+  rel?: string;
+  target?: string;
+  metadata?: "";
 }
 [];
 
@@ -61,7 +78,7 @@ export interface PropertyDefinition {
 
 export interface RulesDefinition {
   required?: boolean;
-  image?: {
+  dimensions?: {
     width?: number;
     height?: number;
     min: {
@@ -77,6 +94,7 @@ export interface RulesDefinition {
       height: number;
     };
   };
+  filesize?: number;
   content?: {
     min: number;
     max: number;
