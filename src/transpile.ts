@@ -3,6 +3,7 @@ import { PropertyDefinition } from "./fields/types";
 
 const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
+let chain: PropertyDefinition[] = [];
 let currentProperty: PropertyDefinition | null = null;
 
 /**
@@ -26,23 +27,81 @@ const transpile: (
  */
 const block = (node) => {
   const variable = node.params[0].original.split(".").pop();
-  currentProperty = properties[variable];
+  // check if the variable is a property
+  if (properties[variable]) {
+    currentProperty = properties[variable];
+    chain.push(currentProperty);
+  }
+  let returnValue;
   switch (node.path.original) {
     case "if":
       // check to see if the block has an else block
       if (node.inverse) {
-        return `{% if module.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
+        returnValue = `{% if module.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
       } else {
-        return `{% if module.${variable} %} ${program(node.program)} {% endif %}`;
+        returnValue = `{% if module.${variable} %} ${program(node.program)} {% endif %}`;
       }
+      break;
     case "each":
       const current = variable[0];
       iterator.push(current);
-      return `{% for ${current} in ${variable} %} ${program(node.program)} {% endfor %}`;
-    default:
-      throw new Error(`Unknown block type: '${node.path.original}'`);
+      returnValue = `{% for ${current} in ${variable} %} ${program(node.program)} {% endfor %}`;
+      break;
   }
+  if (!returnValue) throw new Error(`Unknown block type: '${node.path.original}'`);
+  if (currentProperty) {
+    chain.pop();
+    currentProperty = chain[chain.length - 1];
+  }
+  return returnValue;
 };
+
+const mustache = (node) => {
+  // check if the value is a variable or a string
+  // @ts-ignore
+  let value = node.path.original;
+  const valueParts = value.split(".");
+  console.log(valueParts);
+  for (let key in valueParts) {
+    let part = valueParts[key];
+    if (part === "this") {
+      // We're in a loop, so current prop is already set to the thing we're looping over
+      value = iterator[iterator.length - 1]; // get the last item in the iterator
+    } else if (part === 'properties') {
+      value = 'module';
+    } else {
+      if (value === 'metadata') {
+        // This is a special case where we're looking for a property on the metadata object
+        value = metadata(part);
+      } else {
+        if (currentProperty.type === 'link' || currentProperty.type === 'button') {
+          if (part === 'href' || part === 'url') {
+            value += `href`;
+          }
+          if(part === 'rel') {
+            value += `rel|escape_attr`;
+          }
+        } else {
+          value += `.${part}`;
+        }
+        if (properties[value]) {
+          currentProperty = properties[value];
+          chain.push(currentProperty);
+        }
+      }
+    }
+  }
+
+  return `{{ ${value} }}`;
+}
+
+// Metadata builder
+const metadata = (part: string) => {
+  // lets see what current property we're looking at
+  if(currentProperty) {
+    // TODO: add more metadata properties
+  }
+}
 
 /**
  * Transpile handlebars program to hubspot code
@@ -58,17 +117,7 @@ export const program: (program: hbs.AST.Program) => string = (program) => {
         // @ts-ignore - we know this is a program, and apparently the AST program type is wonky
         buffer.push(program(node));
       case "MustacheStatement":
-        // check if the value is a variable or a string
-        // @ts-ignore
-        let value = node.path.original;
-        if (value === "this") {
-          value = iterator[iterator.length - 1];
-        } else if (value.includes("this")) {
-          value = value.replace("this.", iterator[iterator.length - 1] + ".");
-        } else if (value.includes(".")) {
-          value = value.replaceAll("properties", "module");
-        }
-        buffer.push(`{{ ${value} }}`);
+        buffer.push(mustache(node));
         break;
       case "TextNode":
         // @ts-ignore
