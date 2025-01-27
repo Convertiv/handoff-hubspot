@@ -5,6 +5,7 @@ const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
 let currentProperty: PropertyDefinition | null = null;
+let field;
 
 /**
  * Transpile handlebars code to hubspot code
@@ -27,33 +28,53 @@ const transpile: (
  */
 const block = (node) => {
   const variable = node.params[0].original.split(".").pop();
-  // check if the variable is a property
-  if (properties[variable]) {
-    currentProperty = properties[variable];
-    chain.push(currentProperty);
-  }
   let returnValue;
   switch (node.path.original) {
     case "if":
       // check to see if the block has an else block
+      let target = "module";
+      if (iterator.length > 0) {
+        target = iterator[iterator.length - 1];
+        if (field) {
+          target += `.${field}`;
+        }
+      }
       if (node.inverse) {
-        returnValue = `{% if module.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
+        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
       } else {
-        returnValue = `{% if module.${variable} %} ${program(node.program)} {% endif %}`;
+        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% endif %}`;
       }
       break;
     case "each":
+      // check if the variable is a property
+      if (properties[variable]) {
+        console.log("Found property in block", variable);
+        currentProperty = properties[variable];
+        chain.push(currentProperty);
+        field = variable;
+      }
       const current = variable[0];
-      iterator.push(current);
-      returnValue = `{% for ${current} in ${variable} %} ${program(node.program)} {% endfor %}`;
+      iterator.push(`item_${current}`);
+      returnValue = `{% for item_${current} in ${variable} %} ${program(node.program)} {% endfor %}`;
+      if (currentProperty) {
+        chain.pop();
+        currentProperty = chain[chain.length - 1];
+        field = undefined;
+      }
+      iterator.pop();
       break;
   }
-  if (!returnValue) throw new Error(`Unknown block type: '${node.path.original}'`);
-  if (currentProperty) {
-    chain.pop();
-    currentProperty = chain[chain.length - 1];
-  }
+  if (!returnValue)
+    throw new Error(`Unknown block type: '${node.path.original}'`);
   return returnValue;
+};
+
+// Metadata builder
+const metadata = (part: string) => {
+  // lets see what current property we're looking at
+  if (currentProperty) {
+    // TODO: add more metadata properties
+  }
 };
 
 const mustache = (node) => {
@@ -61,47 +82,48 @@ const mustache = (node) => {
   // @ts-ignore
   let value = node.path.original;
   const valueParts = value.split(".");
-  console.log(valueParts);
+  console.log("Value parts", valueParts);
   for (let key in valueParts) {
     let part = valueParts[key];
     if (part === "this") {
       // We're in a loop, so current prop is already set to the thing we're looping over
       value = iterator[iterator.length - 1]; // get the last item in the iterator
-    } else if (part === 'properties') {
-      value = 'module';
+    } else if (part === "properties") {
+      value = "module";
     } else {
-      if (value === 'metadata') {
+      if (value === "metadata") {
         // This is a special case where we're looking for a property on the metadata object
         value = metadata(part);
       } else {
-        if (currentProperty.type === 'link' || currentProperty.type === 'button') {
-          if (part === 'href' || part === 'url') {
-            value += `href`;
-          }
-          if(part === 'rel') {
-            value += `rel|escape_attr`;
+        if (properties[part]) {
+          currentProperty = properties[part];
+          chain.push(currentProperty);
+          field = part;
+        }
+
+        if (!currentProperty) {
+          value += `.${part}`;
+        } else if (
+          currentProperty.type === "link" ||
+          currentProperty.type === "button" ||
+          currentProperty.type === "breadcrumb"
+        ) {
+          if (part === "label" || part === "text") {
+            value += `.${field}_text`;
+          } else if (part === "href" || part === "url") {
+            value += `.${field}.href`;
+          } else if (part === "rel") {
+            value += `.${field}.rel|escape_attr`;
           }
         } else {
           value += `.${part}`;
-        }
-        if (properties[value]) {
-          currentProperty = properties[value];
-          chain.push(currentProperty);
         }
       }
     }
   }
 
   return `{{ ${value} }}`;
-}
-
-// Metadata builder
-const metadata = (part: string) => {
-  // lets see what current property we're looking at
-  if(currentProperty) {
-    // TODO: add more metadata properties
-  }
-}
+};
 
 /**
  * Transpile handlebars program to hubspot code

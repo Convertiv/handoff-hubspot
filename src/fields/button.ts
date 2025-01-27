@@ -1,7 +1,7 @@
 import { buildBaseField } from "./generic";
 import { PropertyDefinition } from "./types";
 
-const buildButtonField = (id: string, property: PropertyDefinition) => {
+const buildButtonUrlField = (id: string, property: PropertyDefinition) => {
   const build = buildBaseField(id, property);
   build["type"] = "link";
   build["show_advanced_rel_options"] = true;
@@ -20,4 +20,5 @@ const buildButtonField = (id: string, property: PropertyDefinition) => {
   };
   return build;
 };
-export default buildButtonField;
+
+export default buildButtonUrlField;

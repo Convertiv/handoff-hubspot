@@ -1,6 +1,7 @@
 import { parseRequired } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { PropertyDefinition } from "./types";
+import { buildFields } from "./fields";
 
 export const buildBaseGroupField = (
   id: string,
@@ -19,7 +20,7 @@ export const buildBaseGroupField = (
   default: any;
   children: any[];
 } => {
-  return {
+  const group = {
     id: `${id}_${uuidv4()}`,
     name: id,
     label: property.name,
@@ -33,6 +34,9 @@ export const buildBaseGroupField = (
     default: property.default,
     children: [],
   };
+  console.log(property.items.properties);
+  group.children = buildFields(property.items.properties);
+  return group;
 };
 
 export const buildBaseField = (

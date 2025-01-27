@@ -1,6 +1,7 @@
 import buildButtonField from "./button";
+import { buildBaseGroupField } from "./generic";
 import buildImageField from "./image";
-import buildPlainTextField from "./text";
+import buildPlainTextField, { buildLinkTextField } from "./text";
 import buildVideoFileField from "./video";
 
 /**
@@ -9,22 +10,31 @@ import buildVideoFileField from "./video";
  * @returns
  */
 export const buildFields = (properties: any) => {
-  const fields = Object.keys(properties)
-    .map((key: string) => {
-      const property = properties[key];
-      switch (property.type) {
-        case "string":
-          return buildPlainTextField(key, property);
-        case "image":
-          return buildImageField(key, property);
-        case "link":
-          return buildButtonField(key, property);
-        case "button":
-          return buildButtonField(key, property);
-        case "video":
-          return buildVideoFileField(key, property);
-      }
-    })
-    .filter((field) => field != undefined && field != null);
-  return fields;
+  const fields = [];
+  Object.keys(properties).map((key: string) => {
+    const property = properties[key];
+    switch (property.type) {
+      case "breadcrumb":
+        fields.push(buildBaseGroupField(key, property));
+      case "string":
+        fields.push(buildPlainTextField(key, property));
+        break;
+      case "image":
+        fields.push(buildImageField(key, property));
+        break;
+      case "link":
+        fields.push(buildButtonField(key, property));
+        fields.push(buildLinkTextField(key, property));
+        break;
+      case "button":
+        fields.push(buildButtonField(key, property));
+        fields.push(buildLinkTextField(key, property));
+        break;
+      case "video":
+        fields.push(buildVideoFileField(key, property));
+        break;
+    }
+  });
+
+  return fields.filter((field) => field != undefined && field != null);
 };

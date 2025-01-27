@@ -74,6 +74,10 @@ export interface PropertyDefinition {
   description: string;
   rules: RulesDefinition;
   default: ValueDefinition;
+  items?: {
+    type: FieldType;
+    properties: { [key: string]: PropertyDefinition };
+  };
 }
 
 export interface RulesDefinition {

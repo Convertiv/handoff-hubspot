@@ -8,4 +8,17 @@ const buildPlainTextField = (id: string, property: PropertyDefinition) => {
   }
   return build;
 };
+
+export const buildLinkTextField = (
+  id: string,
+  property: PropertyDefinition
+) => {
+  const build = buildBaseField(id, property);
+  build["name"] = `${id}_text`;
+  build["label"] = build["label"] + " Text";
+  if (property.rules.pattern) {
+    build["validation_message"] = property.rules.pattern;
+  }
+  return build;
+};
 export default buildPlainTextField;
