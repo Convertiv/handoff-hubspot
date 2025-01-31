@@ -3,20 +3,36 @@ import { PropertyDefinition } from "./types";
 
 const buildButtonUrlField = (id: string, property: PropertyDefinition) => {
   const build = buildBaseField(id, property);
-  build["type"] = "link";
-  build["show_advanced_rel_options"] = true;
-  build["display_width"] = null;
+  build["name"] = `${id}_url`;
+  build["type"] = "url";
+  build["supported_types"] = [
+    "EXTERNAL",
+    "CONTENT",
+    "FILE",
+    "EMAIL_ADDRESS",
+    "BLOG",
+    "PHONE_NUMBER",
+    "PAYMENT",
+  ];
+  let href = "#";
+  let type = "EXTERNAL";
+  if (typeof property.default === "object" && "href" in property.default) {
+    href = property.default?.href;
+    if (href === "") {
+      href = "#";
+    }
+    if (href.startsWith("http")) {
+    } else if (href.startsWith("mailto:")) {
+      type = "EMAIL_ADDRESS";
+    } else if (href.startsWith("tel:")) {
+      type = "PHONE_NUMBER";
+    }
+  }
+
   build["default"] = {
-    url: {
-      content_id: "",
-      type: "EXTERNAL",
-      href:
-        typeof property.default === "object" && "href" in property.default
-          ? property.default?.href
-          : "",
-    },
-    open_in_new_tab: false,
-    no_follow: false,
+    content_id: null,
+    type,
+    href,
   };
   return build;
 };

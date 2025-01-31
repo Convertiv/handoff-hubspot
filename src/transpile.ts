@@ -30,6 +30,11 @@ const block = (node) => {
   const variable = node.params[0].original.split(".").pop();
   let returnValue;
   switch (node.path.original) {
+    case "field":
+      // figure out if what the field type is
+
+      returnValue = `{# field ${node.params[0].value} #}\n${program(node.program)}`;
+      break;
     case "if":
       // check to see if the block has an else block
       let target = "module";
@@ -82,7 +87,6 @@ const mustache = (node) => {
   // @ts-ignore
   let value = node.path.original;
   const valueParts = value.split(".");
-  console.log("Value parts", valueParts);
   for (let key in valueParts) {
     let part = valueParts[key];
     if (part === "this") {
@@ -111,7 +115,7 @@ const mustache = (node) => {
           if (part === "label" || part === "text") {
             value += `.${field}_text`;
           } else if (part === "href" || part === "url") {
-            value += `.${field}.href`;
+            value += `.${field}_url.href|escape_attr`;
           } else if (part === "rel") {
             value += `.${field}.rel|escape_attr`;
           }

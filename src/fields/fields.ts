@@ -13,10 +13,11 @@ export const buildFields = (properties: any) => {
   const fields = [];
   Object.keys(properties).map((key: string) => {
     const property = properties[key];
+    console.log(property.type);
     switch (property.type) {
-      case "breadcrumb":
+      case "array":
         fields.push(buildBaseGroupField(key, property));
-      case "string":
+      case "text":
         fields.push(buildPlainTextField(key, property));
         break;
       case "image":
@@ -30,7 +31,7 @@ export const buildFields = (properties: any) => {
         fields.push(buildButtonField(key, property));
         fields.push(buildLinkTextField(key, property));
         break;
-      case "video":
+      case "video_file":
         fields.push(buildVideoFileField(key, property));
         break;
     }
