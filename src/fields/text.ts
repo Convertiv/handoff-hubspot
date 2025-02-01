@@ -19,6 +19,11 @@ export const buildLinkTextField = (
   if (property.rules.pattern) {
     build["validation_message"] = property.rules.pattern;
   }
+  let defaultText = "";
+  if (typeof property.default === "object" && "label" in property.default) {
+    defaultText = property.default?.label;
+  }
+  build["default"] = defaultText;
   return build;
 };
 export default buildPlainTextField;

@@ -80,7 +80,7 @@ const buildMeta = (component: HandoffComponent) => {
     js_assets: [],
     other_assets: [],
     smart_type: "NOT_SMART",
-    tags: component.tags,
+    tags: [], //component.tags,
   };
   return metadata;
 };
@@ -99,18 +99,18 @@ const buildModule = async (componentId: string) => {
     parser: "jinja-template",
     plugins: ["prettier-plugin-jinja-template"],
   });
-  writeToModuleFile(pretty, componentId, `module.html`);
-  writeToModuleFile(component.css, componentId, `module.css`);
+  writeToModuleFile(pretty, component.title, `module.html`);
+  writeToModuleFile(component.css, component.title, `module.css`);
   if (!component.js) component.js = "/**\n * This file is blank\n */";
-  writeToModuleFile(component.js, componentId, `module.js`);
+  writeToModuleFile(component.js, component.title, `module.js`);
   writeToModuleFile(
     JSON.stringify(buildMeta(component), null, 2),
-    componentId,
+    component.title,
     `meta.json`
   );
   writeToModuleFile(
     JSON.stringify(buildFields(component.properties), null, 2),
-    componentId,
+    component.title,
     `fields.json`
   );
   return template;
@@ -123,12 +123,20 @@ const buildModule = async (componentId: string) => {
  */
 const writeToModuleFile = async (
   template: string,
-  id: string,
+  component: string,
   name: string
 ) => {
   // ensure dir exists
   const config = readConfig();
-  const targetPath = `${config.modulesPath}/${config.modulePrefix}${id}.module`;
+  let filename = `${config.modulePrefix}${component}`;
+  filename = filename
+    .replace(/[^a-zA-Z0-9]/g, " ")
+    // remove double spaces
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+  const targetPath = `${config.modulesPath}/${filename}.module`;
   console.log("Writing module to ", targetPath);
   if (!fs.existsSync(targetPath)) {
     fs.mkdirSync(targetPath, { recursive: true });

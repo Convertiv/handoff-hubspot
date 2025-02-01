@@ -6,16 +6,20 @@ const buildImageField = (id: string, property: PropertyDefinition) => {
   const build = buildBaseField(id, property);
   build["type"] = "image";
   build["responsive"] = true;
+  let defaultSrc = "";
+  let defaultAlt = "";
+  if (typeof property.default === "object" && "src" in property.default) {
+    defaultSrc = property.default?.src;
+  } else if (typeof property.default === "string") {
+    defaultSrc = property.default;
+  }
+  if (typeof property.default === "object" && "alt" in property.default) {
+    defaultAlt = property.default?.alt;
+  }
   build["default"] = {
     size_type: "exact",
-    src:
-      typeof property.default === "object" && "src" in property.default
-        ? property.default?.src
-        : "",
-    alt:
-      typeof property.default === "object" && "alt" in property.default
-        ? property.default?.alt
-        : "",
+    src: defaultSrc,
+    alt: defaultAlt,
     loading: "lazy",
     width: property.rules.dimensions?.width || 128,
     height: property.rules.dimensions?.height || 128,

@@ -2,10 +2,12 @@ import { parseRequired } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { PropertyDefinition } from "./types";
 import { buildFields } from "./fields";
+import exp from "constants";
 
 export const buildBaseGroupField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  prefix = ""
 ): {
   id: string;
   name: string;
@@ -22,8 +24,8 @@ export const buildBaseGroupField = (
 } => {
   const group = {
     id: `${id}_${uuidv4()}`,
-    name: id,
-    label: property.name,
+    name: safeLabel(id),
+    label: safeName(property.name),
     required: parseRequired(property.rules),
     help_text: property.description,
     locked: false,
@@ -40,7 +42,8 @@ export const buildBaseGroupField = (
 
 export const buildBaseField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  prefix = ""
 ): {
   id: string;
   name: string;
@@ -57,8 +60,8 @@ export const buildBaseField = (
 } => {
   return {
     id: `${id}_${uuidv4()}`,
-    name: id,
-    label: property.name,
+    name: safeLabel(id),
+    label: safeName(property.name),
     required: parseRequired(property.rules),
     help_text: property.description,
     locked: false,
@@ -68,4 +71,18 @@ export const buildBaseField = (
     display_width: null,
     default: property.default,
   };
+};
+
+export const safeLabel = (label: string) => {
+  if (label === "label") {
+    return "field_label";
+  }
+  return label.replace(/[^a-zA-Z0-9_]/g, "_");
+};
+
+export const safeName = (name: string) => {
+  if (name.toLocaleLowerCase() === "label") {
+    return "Field Label";
+  }
+  return name;
 };

@@ -17,6 +17,7 @@ export const buildFields = (properties: any) => {
     switch (property.type) {
       case "array":
         fields.push(buildBaseGroupField(key, property));
+        break;
       case "text":
         fields.push(buildPlainTextField(key, property));
         break;
