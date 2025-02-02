@@ -60,7 +60,7 @@ const block = (node) => {
       }
       const current = variable[0];
       iterator.push(`item_${current}`);
-      returnValue = `{% for item_${current} in ${variable} %} ${program(node.program)} {% endfor %}`;
+      returnValue = `{% for item_${current} in module.${variable} %} ${program(node.program)} {% endfor %}`;
       if (currentProperty) {
         chain.pop();
         currentProperty = chain[chain.length - 1];

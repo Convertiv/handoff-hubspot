@@ -34,6 +34,12 @@ export const buildBaseGroupField = (
     type: "group",
     display_width: null,
     default: property.default,
+    occurrence: {
+      min: property.rules.content?.min || 0,
+      max: property.rules.content?.max || 0,
+      sorting_label_field: null,
+      default: property.rules.content?.min || 0,
+    },
     children: [],
   };
   group.children = buildFields(property.items.properties);

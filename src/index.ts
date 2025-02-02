@@ -74,7 +74,7 @@ const buildMeta = (component: HandoffComponent) => {
     label: component.title,
     css_assets: [],
     external_js: [],
-    global: true,
+    global: false,
     help_text: component.description,
     content_types: ["ANY"],
     js_assets: [],
