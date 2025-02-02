@@ -1,5 +1,6 @@
 export type FieldType =
   | "text"
+  | "array"
   | "number"
   | "checkbox"
   | "select"
@@ -10,9 +11,25 @@ export type FieldType =
   | "video_file"
   | "file"
   | "video_embed";
+
+export const FieldTypes: FieldType[] = [
+  "text",
+  "array",
+  "number",
+  "checkbox",
+  "select",
+  "image",
+  "button",
+  "link",
+  "breadcrumb",
+  "video_file",
+  "file",
+  "video_embed",
+];
+
 export type ComponentType = "element" | "block";
 
-export interface ComponentDefinition {
+export type HandoffComponent = {
   id: string;
   title: string;
   description: string;
@@ -20,9 +37,17 @@ export interface ComponentDefinition {
   preview: string;
   group: string;
   tags: string[];
+  code: string;
+  css: string;
+  js: string;
   previews: { [key: string]: PreviewDefinition };
   properties: { [key: string]: PropertyDefinition };
-}
+};
+
+export type HandoffComponentResponse = {
+  latest: HandoffComponent;
+  [key: string]: HandoffComponent;
+};
 
 export interface PreviewDefinition {
   title: string;

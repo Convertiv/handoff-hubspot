@@ -8,6 +8,8 @@ import * as prettier from "prettier";
 import path, { parse } from "path";
 import { createConfigCommand, readConfig } from "./config/command";
 import { buildFields } from "./fields/fields";
+import validateModule from "./validate";
+import { HandoffComponent, HandoffComponentResponse } from "./fields/types";
 
 const init = async () => {
   const config = readConfig();
@@ -53,21 +55,7 @@ const fetchComponent: (
   }
 };
 
-type HandoffComponent = {
-  id: string;
-  title: string;
-  description: string;
-  code: string;
-  css: string;
-  js: string;
-  properties: any;
-  tags: string[];
-};
 
-type HandoffComponentResponse = {
-  latest: HandoffComponent;
-  [key: string]: HandoffComponent;
-};
 
 const buildMeta = (component: HandoffComponent) => {
   const metadata = {
@@ -85,16 +73,24 @@ const buildMeta = (component: HandoffComponent) => {
   return metadata;
 };
 
+
 /**
  * Build a web component from a handoff component
  * @param componentId
  * @returns
  */
-const buildModule = async (componentId: string) => {
+const buildModule = async (componentId: string, force: boolean) => {
   const data = await fetchComponent(componentId);
   const component = data.latest;
-  const template = transpile(component.code, component.properties);
+  // Validate the component
+  const errors = validateModule(component);
+  if(errors.length > 0) {
+    console.error("Validation failed with these errors.  You may override and force a build with the force option, using --force", errors);
+    return;
+  }
 
+  const template = transpile(component.code, component.properties);
+  
   const pretty = await prettier.format(template, {
     parser: "jinja-template",
     plugins: ["prettier-plugin-jinja-template"],
@@ -197,9 +193,32 @@ const main = async () => {
     .command({
       command: "fetch [component]",
       describe: "Fetch a component and transform it to a hubspot component",
+      // add an optional force
+      builder: (yargs) => {
+        return yargs.option("force", {
+          alias: "f",
+          description: "Force the build",
+          type: "boolean",
+        });
+      },
       handler: async (parsed) => {
         console.log("Fetching component", parsed.component);
-        await buildModule(parsed.component);
+        await buildModule(parsed.component, parsed.force);
+      },
+    })
+    .command({
+      command: "validate [component]",
+      describe: "Read the component and validate it",
+      handler: async (parsed) => {
+        console.log("Validating component", parsed.component);
+        const data = await fetchComponent(parsed.component);
+        const component = data.latest;
+        const errors = validateModule(component);
+        if(errors.length > 0) {
+          console.error("Validation failed", errors);
+        } else {
+          console.log("Validation passed");
+        }
       },
     })
     .help()

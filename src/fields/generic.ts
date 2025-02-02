@@ -1,8 +1,8 @@
 import { parseRequired } from "./utils";
 import { v4 as uuidv4 } from "uuid";
-import { PropertyDefinition } from "./types";
+import { FieldTypes, PropertyDefinition } from "./types";
 import { buildFields } from "./fields";
-import exp from "constants";
+
 
 export const buildBaseGroupField = (
   id: string,
