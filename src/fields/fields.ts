@@ -13,7 +13,6 @@ export const buildFields = (properties: any) => {
   const fields = [];
   Object.keys(properties).map((key: string) => {
     const property = properties[key];
-    console.log(property.type);
     switch (property.type) {
       case "array":
         fields.push(buildBaseGroupField(key, property));
