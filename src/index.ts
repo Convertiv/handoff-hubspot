@@ -8,8 +8,10 @@ import * as prettier from "prettier";
 import path, { parse } from "path";
 import { createConfigCommand, readConfig } from "./config/command";
 import { buildFields } from "./fields/fields";
-import validateModule from "./validate";
-import { HandoffComponent, HandoffComponentResponse } from "./fields/types";
+import { formatErrors, validateAll, validateModule } from "./validate";
+import { HandoffComponent, HandoffComponentListResponse, HandoffComponentResponse } from "./fields/types";
+import validateComponent from "./validate";
+import chalk from "chalk";
 
 const init = async () => {
   const config = readConfig();
@@ -42,12 +44,29 @@ const fetchSharedStyles: () => Promise<void> = async () => {
  * @param componentId
  * @returns Object
  */
-const fetchComponent: (
+export const fetchComponent: (
   componentId: string
 ) => Promise<HandoffComponentResponse> = async (componentId: string) => {
   try {
     const request = await init();
     const response = await request.get(`component/${componentId}.json`);
+    // Parse response and create a web component from response
+    return response.data;
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+/**
+* Fetch component from handoff api
+* @param componentId
+* @returns Object
+*/
+export const fetchComponentList: (
+) => Promise<HandoffComponentListResponse> = async () => {
+  try {
+    const request = await init();
+    const response = await request.get(`components.json`);
     // Parse response and create a web component from response
     return response.data;
   } catch (e) {
@@ -84,13 +103,17 @@ const buildModule = async (componentId: string, force: boolean) => {
   const component = data.latest;
   // Validate the component
   const errors = validateModule(component);
-  if(errors.length > 0) {
-    console.error("Validation failed with these errors.  You may override and force a build with the force option, using --force", errors);
-    return;
+  if (errors.length > 0) {
+    console.error(`Validation failed with these errors.  You may override and force a build with the force option, using --force\n\n`, formatErrors(errors));
+    if (!force) {
+      return;
+    } else {
+      console.log(chalk.green("\n---- Force Mode on. Building module with errors ----\n"));
+    }
   }
 
   const template = transpile(component.code, component.properties);
-  
+
   const pretty = await prettier.format(template, {
     parser: "jinja-template",
     plugins: ["prettier-plugin-jinja-template"],
@@ -133,7 +156,7 @@ const writeToModuleFile = async (
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
   const targetPath = `${config.modulesPath}/${filename}.module`;
-  console.log("Writing module to ", targetPath);
+  console.log(chalk.green(`Writing ${name} to ${targetPath}`));
   if (!fs.existsSync(targetPath)) {
     fs.mkdirSync(targetPath, { recursive: true });
   }
@@ -202,7 +225,7 @@ const main = async () => {
         });
       },
       handler: async (parsed) => {
-        console.log("Fetching component", parsed.component);
+        console.log(`-- Fetching component ${parsed.component}---\n`);
         await buildModule(parsed.component, parsed.force);
       },
     })
@@ -211,16 +234,26 @@ const main = async () => {
       describe: "Read the component and validate it",
       handler: async (parsed) => {
         console.log("Validating component", parsed.component);
-        const data = await fetchComponent(parsed.component);
-        const component = data.latest;
-        const errors = validateModule(component);
-        if(errors.length > 0) {
-          console.error("Validation failed", errors);
-        } else {
-          console.log("Validation passed");
-        }
+        validateComponent(parsed.component);
       },
     })
+    .command({
+      command: "validate:all",
+      describe: "Pull a list of all components and validate them",
+      handler: async (parsed) => {
+        console.log("Validating all component");
+        validateAll();
+      },
+    })
+    .command({
+      command: "fetch:all",
+      describe: "Fetch and build all components",
+      handler: async (parsed) => {
+        console.log("Validating all component");
+        console.log(chalk.yellow("This command is not yet implemented"));
+      },
+    })
+
     .help()
     .parse();
 };

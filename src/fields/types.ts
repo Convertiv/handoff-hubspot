@@ -44,6 +44,9 @@ export type HandoffComponent = {
   properties: { [key: string]: PropertyDefinition };
 };
 
+export type HandoffComponentListResponse =
+  HandoffComponent[];
+
 export type HandoffComponentResponse = {
   latest: HandoffComponent;
   [key: string]: HandoffComponent;
