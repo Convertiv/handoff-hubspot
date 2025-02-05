@@ -1,6 +1,9 @@
-# handoff-hubspot-poc
+# Handoff Hubspot Client
 
-A POC for building hubspot components from the handoff api
+This is a transformer client for the Handoff frontend API. It reads from a
+component set of hosted handoff components, and validates them against the
+Hubspot module specification. It then transpiles the handlebars code into
+hubspot module code with attached css/js and fields.
 
 ## Quick Start
 

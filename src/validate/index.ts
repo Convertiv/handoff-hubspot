@@ -313,6 +313,16 @@ export const validateModule = (
   if (!component.title) {
     errors.push({ message: "Component title is required", attribute: "title" });
   }
+  if (!component.tags) {
+    errors.push({ message: "Component tags are required", attribute: "tags" });
+  } else {
+    if (!Array.isArray(component.tags)) {
+      errors.push({
+        message: "Component tags must be an array",
+        attribute: "tags",
+      });
+    }
+  }
   if (!component.properties) {
     errors.push({
       message: "Component properties are required",

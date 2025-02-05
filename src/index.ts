@@ -100,7 +100,7 @@ const buildMeta = (component: HandoffComponent) => {
     js_assets: [],
     other_assets: [],
     smart_type: "NOT_SMART",
-    tags: [], //component.tags,
+    categories: component.tags,
   };
   return metadata;
 };
