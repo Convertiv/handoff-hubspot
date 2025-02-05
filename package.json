@@ -10,7 +10,8 @@
     "build": "tsc",
     "fetch": "node dist/index.js",
     "start": "http-server ./",
-    "publish": "np"
+    "publish": "np",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
