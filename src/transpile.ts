@@ -27,7 +27,8 @@ const transpile: (
  * @returns
  */
 const block = (node) => {
-  const variable = node.params[0].original.split(".").pop();
+  const variableList = node.params[0].original.split(".");
+  let variable = variableList[variableList.length - 1];
   let returnValue;
   switch (node.path.original) {
     case "field":
@@ -36,18 +37,22 @@ const block = (node) => {
       returnValue = `{# field ${node.params[0].value} #}\n${program(node.program)}`;
       break;
     case "if":
-      // check to see if the block has an else block
       let target = "module";
       if (iterator.length > 0) {
         target = iterator[iterator.length - 1];
         if (field) {
           target += `.${field}`;
         }
-      }
-      if (node.inverse) {
-        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
       } else {
-        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% endif %}`;
+        delete variableList[0];
+        variable = variableList.join(".");
+        console.log(variable);
+      }
+      // check to see if the block has an else block
+      if (node.inverse) {
+        returnValue = `{% if ${target}${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
+      } else {
+        returnValue = `{% if ${target}${variable} %} ${program(node.program)} {% endif %}`;
       }
       break;
     case "each":

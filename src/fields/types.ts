@@ -1,6 +1,8 @@
 export type FieldType =
   | "text"
+  | "richtext"
   | "array"
+  | "object"
   | "number"
   | "checkbox"
   | "select"
@@ -14,8 +16,10 @@ export type FieldType =
 
 export const FieldTypes: FieldType[] = [
   "text",
+  "richtext",
   "array",
   "number",
+  "object",
   "checkbox",
   "select",
   "image",
@@ -40,17 +44,14 @@ export type HandoffComponent = {
   code: string;
   css: string;
   js: string;
+  jsCompiled?: string;
   previews: { [key: string]: PreviewDefinition };
   properties: { [key: string]: PropertyDefinition };
 };
 
-export type HandoffComponentListResponse =
-  HandoffComponent[];
+export type HandoffComponentListResponse = HandoffComponent[];
 
-export type HandoffComponentResponse = {
-  latest: HandoffComponent;
-  [key: string]: HandoffComponent;
-};
+export type HandoffComponentResponse = HandoffComponent;
 
 export interface PreviewDefinition {
   title: string;

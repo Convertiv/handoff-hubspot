@@ -9,7 +9,11 @@ import path, { parse } from "path";
 import { createConfigCommand, readConfig } from "./config/command";
 import { buildFields } from "./fields/fields";
 import { formatErrors, validateAll, validateModule } from "./validate";
-import { HandoffComponent, HandoffComponentListResponse, HandoffComponentResponse } from "./fields/types";
+import {
+  HandoffComponent,
+  HandoffComponentListResponse,
+  HandoffComponentResponse,
+} from "./fields/types";
 import validateComponent from "./validate";
 import chalk from "chalk";
 
@@ -49,7 +53,7 @@ export const fetchComponent: (
 ) => Promise<HandoffComponentResponse> = async (componentId: string) => {
   try {
     const request = await init();
-    const response = await request.get(`component/${componentId}.json`);
+    const response = await request.get(`component/${componentId}/latest.json`);
     // Parse response and create a web component from response
     return response.data;
   } catch (e) {
@@ -58,23 +62,21 @@ export const fetchComponent: (
 };
 
 /**
-* Fetch component from handoff api
-* @param componentId
-* @returns Object
-*/
-export const fetchComponentList: (
-) => Promise<HandoffComponentListResponse> = async () => {
-  try {
-    const request = await init();
-    const response = await request.get(`components.json`);
-    // Parse response and create a web component from response
-    return response.data;
-  } catch (e) {
-    console.error(e);
-  }
-};
-
-
+ * Fetch component from handoff api
+ * @param componentId
+ * @returns Object
+ */
+export const fetchComponentList: () => Promise<HandoffComponentListResponse> =
+  async () => {
+    try {
+      const request = await init();
+      const response = await request.get(`components.json`);
+      // Parse response and create a web component from response
+      return response.data;
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
 const buildMeta = (component: HandoffComponent) => {
   const metadata = {
@@ -83,7 +85,18 @@ const buildMeta = (component: HandoffComponent) => {
     external_js: [],
     global: false,
     help_text: component.description,
-    content_types: ["ANY"],
+    content_types: [
+      "LANDING_PAGE",
+      "KNOWLEDGE_BASE",
+      "QUOTE_TEMPLATE",
+      "LANDING_PAGE",
+      "SITE_PAGE",
+      "CUSTOMER_PORTAL",
+      "BLOG_LISTING",
+      "WEB_INTERACTIVE",
+      "BLOG_POST",
+      "MEMBERSHIP",
+    ],
     js_assets: [],
     other_assets: [],
     smart_type: "NOT_SMART",
@@ -92,7 +105,6 @@ const buildMeta = (component: HandoffComponent) => {
   return metadata;
 };
 
-
 /**
  * Build a web component from a handoff component
  * @param componentId
@@ -100,15 +112,20 @@ const buildMeta = (component: HandoffComponent) => {
  */
 const buildModule = async (componentId: string, force: boolean) => {
   const data = await fetchComponent(componentId);
-  const component = data.latest;
+  const component = data;
   // Validate the component
   const errors = validateModule(component);
   if (errors.length > 0) {
-    console.error(`Validation failed with these errors.  You may override and force a build with the force option, using --force\n\n`, formatErrors(errors));
+    console.error(
+      `Validation failed with these errors.  You may override and force a build with the force option, using --force\n\n`,
+      formatErrors(errors)
+    );
     if (!force) {
       return;
     } else {
-      console.log(chalk.green("\n---- Force Mode on. Building module with errors ----\n"));
+      console.log(
+        chalk.green("\n---- Force Mode on. Building module with errors ----\n")
+      );
     }
   }
 
@@ -120,8 +137,8 @@ const buildModule = async (componentId: string, force: boolean) => {
   });
   writeToModuleFile(pretty, component.title, `module.html`);
   writeToModuleFile(component.css, component.title, `module.css`);
-  if (!component.js) component.js = "/**\n * This file is blank\n */";
-  writeToModuleFile(component.js, component.title, `module.js`);
+  if (!component.jsCompiled) component.js = "/**\n * This file is blank\n */";
+  writeToModuleFile(component.jsCompiled, component.title, `module.js`);
   writeToModuleFile(
     JSON.stringify(buildMeta(component), null, 2),
     component.title,
