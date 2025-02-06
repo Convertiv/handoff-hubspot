@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import axios from "axios";
-import fs from "fs";
+import fs, { read } from "fs";
 import transpile from "./transpile";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -16,6 +16,7 @@ import {
 } from "./fields/types";
 import validateComponent from "./validate";
 import chalk from "chalk";
+import { version } from "os";
 
 const init = async () => {
   const config = readConfig();
@@ -55,6 +56,12 @@ export const fetchComponent: (
     const request = await init();
     const response = await request.get(`component/${componentId}/latest.json`);
     // Parse response and create a web component from response
+    // check the response code
+    console.log(response.status);
+    if (response.status !== 200) {
+      console.error("Component not found");
+      return null;
+    }
     return response.data;
   } catch (e) {
     console.error(e);
@@ -77,6 +84,42 @@ export const fetchComponentList: () => Promise<HandoffComponentListResponse> =
       console.error(e);
     }
   };
+
+const open = (url: string) => {
+  const start = process.platform == "darwin" ? "open" : process.platform == "win32" ? "start" : "xdg-open";
+  console.log(url);
+  require("child_process").exec(start + " " + url);
+}
+
+const openDocs = async (componentId: string) => {
+  const config = readConfig();
+  // check to see if the component exists
+  const component = await fetchComponent(componentId);
+  if (!component) {
+    console.error("Component not found");
+    return;
+  }
+  const url = config.url;
+  open(`${url}../system/component/${componentId}`);
+}
+
+
+const listComponents = async () => {
+  const data = await fetchComponentList();
+  const components = data;
+  const table = [];
+  
+  components.forEach((component) => {
+    table.push({
+      id: component.id,
+      title: component.title,
+      description: component.description.substring(0, 50),
+      // @ts-ignore
+      "latest version": component.version,
+    });
+  });
+  console.table(table);
+};
 
 const buildMeta = (component: HandoffComponent) => {
   const metadata = {
@@ -228,6 +271,23 @@ const main = async () => {
       describe: "Fetch shared styles from handoff",
       handler: async () => {
         fetchSharedStyles();
+      },
+    })
+    .command({
+      command: "list",
+      describe: "List the components available in handoff",
+      handler: async (parsed) => {
+        console.log(`-- List all Components---\n`);
+        await listComponents();
+      },
+    })
+    .command({
+      command: "docs [component]",
+      describe: "Open the documentation page for a component",
+
+      handler: async (parsed) => {
+        console.log(`-- Opening component ${parsed.component}---\n`);
+        await openDocs(parsed.component);
       },
     })
     .command({
