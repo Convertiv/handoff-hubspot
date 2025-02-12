@@ -28,6 +28,12 @@ const init = async () => {
     baseURL: url,
     headers,
   });
+  if (config.username && config.password) {
+    request.defaults.auth = {
+      username: config.username,
+      password: config.password,
+    };
+  }
   return request;
 };
 

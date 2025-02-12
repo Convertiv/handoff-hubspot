@@ -6,6 +6,8 @@ const defaultConfig = {
   cssPath: "css/uds.css",
   modulesPath: "modules",
   modulePrefix: "uds_",
+  username: "",
+  password: "",
 };
 
 export const createConfigCommand = async () => {
@@ -47,12 +49,35 @@ export const createConfigCommand = async () => {
     message: "Do you want to provide a prefix for the modules?",
     initial: defaultConfig.modulePrefix,
   });
+  const authRequired = await prompts({
+    type: "confirm",
+    name: "value",
+    message: "Does the handoff site require authentication?",
+    initial: false,
+  });
+  let username = { value: "" };
+  let password = { value: "" };
+  if (authRequired.value) {
+    // get the username and password
+    username = await prompts({
+      type: "text",
+      name: "value",
+      message: "What is your username?",
+    });
+    password = await prompts({
+      type: "password",
+      name: "value",
+      message: "What is your password?",
+    });
+  }
   const handoffConfig = {
     ...defaultConfig,
     url: url.value,
     cssPath: cssPath.value,
     modulesPath: modulesPath.value,
     modulePrefix: modulePrefix.value,
+    username: username.value,
+    password: password.value,
   };
   fs.writeFile(
     "handoff.config.json",
