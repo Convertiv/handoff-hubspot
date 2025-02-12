@@ -20,6 +20,21 @@ const validateField = (
   key: string
 ): FieldValidation[] => {
   let errors = [];
+  if (!key) {
+    errors.push({
+      message: "Field id is required",
+      attribute: "id",
+      property: "undefined",
+    });
+  }
+  if (key === "id") {
+    errors.push({
+      message: "Field id is reserved",
+      attribute: "id",
+      property: key,
+      severity: "error",
+    });
+  }
   if (!property.type) {
     errors.push({
       message: "Field type is required",
