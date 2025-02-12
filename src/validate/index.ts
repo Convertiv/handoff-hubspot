@@ -15,6 +15,17 @@ export interface FieldValidation {
 }
 [];
 
+// Allowed categories
+const categories = ["blog",
+  "body_content",
+  "commerce",
+  "design",
+  "functionality",
+  "forms_and_buttons",
+  "media",
+  "social",
+  "text"];
+
 const validateField = (
   property: PropertyDefinition,
   key: string
@@ -336,6 +347,28 @@ export const validateModule = (
         message: "Component tags must be an array",
         attribute: "tags",
       });
+    }
+  }
+  if (!component.categories) {
+    errors.push({
+      message: "Component categories are required",
+      attribute: "categories",
+    });
+  } else {
+    if (!Array.isArray(component.tags)) {
+      errors.push({
+        message: "Component tags must be an array",
+        attribute: "tags",
+      });
+    } else {
+      for (let category of component.categories) {
+        if (categories.indexOf(category) === -1) {
+          errors.push({
+            message: `Category ${category} is invalid`,
+            attribute: "categories",
+          });
+        }
+      }
     }
   }
   if (!component.properties) {

@@ -40,6 +40,7 @@ export type HandoffComponent = {
   type: FieldType;
   preview: string;
   group: string;
+  categories: string[];
   tags: string[];
   code: string;
   css: string;

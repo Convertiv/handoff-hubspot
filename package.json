@@ -11,7 +11,8 @@
     "fetch": "node dist/index.js",
     "start": "http-server ./",
     "publish": "np",
-    "test": "echo \"Error: no test specified\""
+    "test": "echo \"Error: no test specified\"",
+    "cli": "node dist/index.js"
   },
   "author": "",
   "license": "ISC",
