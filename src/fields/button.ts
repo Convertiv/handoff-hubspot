@@ -42,7 +42,7 @@ export const buildButtonLabelField = (
   property: PropertyDefinition
 ) => {
   const build = buildBaseField(id, property);
-  build["name"] = `${id}_label`;
+  build["name"] = `${id}_text`;
   build["label"] = build["label"] + " Label";
   if (property.rules.pattern) {
     build["validation_message"] = property.rules.pattern;

@@ -56,11 +56,9 @@ const block = (node) => {
         // if (field) {
         //   target += `.${field}`;
         // }
-        console.log(field, target, variable);
       } else {
         delete variableList[0];
         variable = variableList.filter(variable => variable !== null).join(".");
-        console.log(target, variable);
       }
 
       // check to see if the block has an else block
@@ -103,7 +101,6 @@ const metadata = (part: string) => {
 
 const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   let current;
-  console.log('Find Part', part, parent);
   if (parent && (parent.type === "object" || parent.type === "array")) {
     if (parent.properties) {
       current = parent.properties[part];
@@ -123,7 +120,6 @@ const mustache = (node) => {
   const valueParts = value.split(".");
   for (let part of valueParts) {
     lookup = findPart(part, parentProperty);
-    console.log("Lookup", lookup);
     if (lookup) {
       parentProperty = lookup;
       field = part;
@@ -140,7 +136,6 @@ const mustache = (node) => {
         // This is a special case where we're looking for a property on the metadata object
         value = metadata(part);
       } else {
-        console.log("In Mustache", part, value, parentProperty);  
         if (!parentProperty) {
           value += `.${part}`;
         } else if (
