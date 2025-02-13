@@ -1,5 +1,5 @@
 import { buildBooleanField } from "./boolean";
-import buildButtonField from "./button";
+import buildButtonField, { buildButtonLabelField } from "./button";
 import { buildBaseGroupField } from "./generic";
 import buildImageField from "./image";
 import { buildObjectGroupField } from "./object";
@@ -43,7 +43,7 @@ export const buildFields = (properties: any) => {
         break;
       case "button":
         fields.push(buildButtonField(key, property));
-        fields.push(buildLinkTextField(key, property));
+        fields.push(buildButtonLabelField(key, property));
         break;
       case "video_file":
         fields.push(buildVideoFileField(key, property));
