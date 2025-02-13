@@ -447,10 +447,12 @@ export const validateAll = async () => {
         )
       );
       console.log(formatErrors(errors));
+      throw new Error("Validation failed");
     } else {
       console.log(chalk.green(`\nValidation passed for (${component.title})`));
     }
   });
+  return true;
 };
 
 export default validateComponent;
