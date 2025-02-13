@@ -95,7 +95,6 @@ const open = (url: string) => {
       : process.platform == "win32"
         ? "start"
         : "xdg-open";
-  console.log(url);
   require("child_process").exec(start + " " + url);
 };
 

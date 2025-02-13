@@ -5,6 +5,7 @@ const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
 let currentProperty: PropertyDefinition | null = null;
+let parentProperty: PropertyDefinition | null = null;
 let field;
 
 /**
@@ -27,7 +28,7 @@ const transpile: (
  * @returns
  */
 const block = (node) => {
-  const variableList = node.params[0].original.split(".");
+  const variableList: string[] = node.params[0].original.split(".");
   let variable = variableList[variableList.length - 1];
   let returnValue;
   switch (node.path.original) {
@@ -42,28 +43,29 @@ const block = (node) => {
       if (properties[variable]) {
         findProperty = properties[variable];
         if (
-          findProperty.type === "link" ||
-          findProperty.type === "button" ||
-          findProperty.type === "breadcrumb"
+          findProperty.type === "link"
         ) {
+          variableList[variableList.length - 1] = `${variable}_text`;
+        } else if (findProperty.type === "button" ||
+          findProperty.type === "breadcrumb") {
           variableList[variableList.length - 1] = `${variable}_text`;
         }
       }
       if (iterator.length > 0) {
         target = iterator[iterator.length - 1];
-        if (field) {
-          target += `.${field}`;
-        }
+        // if (field) {
+        //   target += `.${field}`;
+        // }
       } else {
         delete variableList[0];
-        variable = variableList.join(".");
+        variable = variableList.filter(variable => variable !== null).join(".");
       }
 
       // check to see if the block has an else block
       if (node.inverse) {
-        returnValue = `{% if ${target}${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
+        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
       } else {
-        returnValue = `{% if ${target}${variable} %} ${program(node.program)} {% endif %}`;
+        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% endif %}`;
       }
       break;
     case "each":
@@ -97,20 +99,36 @@ const metadata = (part: string) => {
   }
 };
 
+const findPart = (part: string, parent: PropertyDefinition | undefined) => {
+  let current;
+  if (parent && (parent.type === "object" || parent.type === "array")) {
+    if (parent.properties) {
+      current = parent.properties[part];
+    } else if (parent.items?.properties) {
+      current = parent.items.properties[part];
+    }
+  } else {
+    current = properties[part];
+  }
+  return current;
+}
+
 const mustache = (node) => {
   // check if the value is a variable or a string
   // @ts-ignore
-  let value = node.path.original;
+  let value = node.path.original, lookup;
   const valueParts = value.split(".");
-  for (let key in valueParts) {
-    let part = valueParts[key];
-    // the field name can not be = label
-    if (part === "label") {
-      part = "field_label";
+  for (let part of valueParts) {
+    lookup = findPart(part, parentProperty);
+    if (lookup) {
+      parentProperty = lookup;
+      field = part;
     }
+    // the field name can not be = label
     if (part === "this") {
       // We're in a loop, so current prop is already set to the thing we're looping over
       value = iterator[iterator.length - 1]; // get the last item in the iterator
+      parentProperty = currentProperty;
     } else if (part === "properties") {
       value = "module";
     } else {
@@ -118,19 +136,14 @@ const mustache = (node) => {
         // This is a special case where we're looking for a property on the metadata object
         value = metadata(part);
       } else {
-        if (properties[part]) {
-          currentProperty = properties[part];
-          chain.push(currentProperty);
-          field = part;
-        }
-        if (!currentProperty) {
+        if (!parentProperty) {
           value += `.${part}`;
         } else if (
-          currentProperty.type === "link" ||
-          currentProperty.type === "button" ||
-          currentProperty.type === "breadcrumb"
+          parentProperty.type === "link" ||
+          parentProperty.type === "button" ||
+          parentProperty.type === "breadcrumb"
         ) {
-          if (part === "field_label" || part === "text") {
+          if (part === "label" || part === "text") {
             value += `.${field}_text`;
           } else if (part === "href" || part === "url") {
             value += `.${field}_url.href|escape_attr`;
@@ -143,7 +156,7 @@ const mustache = (node) => {
       }
     }
   }
-
+  
   return `{{ ${value} }}`;
 };
 

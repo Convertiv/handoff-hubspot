@@ -85,7 +85,6 @@ const validateField = (
     property.type !== "object" &&
     property.type !== "pagination"
   ) {
-    console.log(property);
     errors.push({
       message: "Field default is required",
       attribute: "default",

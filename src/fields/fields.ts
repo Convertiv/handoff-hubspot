@@ -1,6 +1,8 @@
-import buildButtonField from "./button";
-import { buildBaseGroupField, buildObjectGroupField } from "./generic";
+import { buildBooleanField } from "./boolean";
+import buildButtonField, { buildButtonLabelField } from "./button";
+import { buildBaseGroupField } from "./generic";
 import buildImageField from "./image";
+import { buildObjectGroupField } from "./object";
 import buildPlainTextField, {
   buildLinkTextField,
   buildRichTextField,
@@ -16,8 +18,10 @@ export const buildFields = (properties: any) => {
   const fields = [];
   Object.keys(properties).map((key: string) => {
     const property = properties[key];
-    console.log("Property", property.type);
     switch (property.type) {
+      case "boolean":
+        fields.push(buildBooleanField(key, property));
+        break;
       case "array":
         fields.push(buildBaseGroupField(key, property));
         break;
@@ -39,7 +43,7 @@ export const buildFields = (properties: any) => {
         break;
       case "button":
         fields.push(buildButtonField(key, property));
-        fields.push(buildLinkTextField(key, property));
+        fields.push(buildButtonLabelField(key, property));
         break;
       case "video_file":
         fields.push(buildVideoFileField(key, property));
