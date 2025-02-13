@@ -33,11 +33,22 @@ const block = (node) => {
   switch (node.path.original) {
     case "field":
       // figure out if what the field type is
-
       returnValue = `{# field ${node.params[0].value} #}\n${program(node.program)}`;
       break;
     case "if":
       let target = "module";
+      let findProperty;
+      // ask if the variable is a property
+      if (properties[variable]) {
+        findProperty = properties[variable];
+        if (
+          findProperty.type === "link" ||
+          findProperty.type === "button" ||
+          findProperty.type === "breadcrumb"
+        ) {
+          variableList[variableList.length - 1] = `${variable}_text`;
+        }
+      }
       if (iterator.length > 0) {
         target = iterator[iterator.length - 1];
         if (field) {
@@ -46,8 +57,8 @@ const block = (node) => {
       } else {
         delete variableList[0];
         variable = variableList.join(".");
-        console.log(variable);
       }
+
       // check to see if the block has an else block
       if (node.inverse) {
         returnValue = `{% if ${target}${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
@@ -58,7 +69,6 @@ const block = (node) => {
     case "each":
       // check if the variable is a property
       if (properties[variable]) {
-        console.log("Found property in block", variable);
         currentProperty = properties[variable];
         chain.push(currentProperty);
         field = variable;
@@ -94,6 +104,10 @@ const mustache = (node) => {
   const valueParts = value.split(".");
   for (let key in valueParts) {
     let part = valueParts[key];
+    // the field name can not be = label
+    if (part === "label") {
+      part = "field_label";
+    }
     if (part === "this") {
       // We're in a loop, so current prop is already set to the thing we're looping over
       value = iterator[iterator.length - 1]; // get the last item in the iterator
@@ -109,7 +123,6 @@ const mustache = (node) => {
           chain.push(currentProperty);
           field = part;
         }
-
         if (!currentProperty) {
           value += `.${part}`;
         } else if (
@@ -117,7 +130,7 @@ const mustache = (node) => {
           currentProperty.type === "button" ||
           currentProperty.type === "breadcrumb"
         ) {
-          if (part === "label" || part === "text") {
+          if (part === "field_label" || part === "text") {
             value += `.${field}_text`;
           } else if (part === "href" || part === "url") {
             value += `.${field}_url.href|escape_attr`;

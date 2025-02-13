@@ -16,7 +16,8 @@ export interface FieldValidation {
 [];
 
 // Allowed categories
-const categories = ["blog",
+const categories = [
+  "blog",
   "body_content",
   "commerce",
   "design",
@@ -24,7 +25,8 @@ const categories = ["blog",
   "forms_and_buttons",
   "media",
   "social",
-  "text"];
+  "text",
+];
 
 const validateField = (
   property: PropertyDefinition,
@@ -77,7 +79,13 @@ const validateField = (
       severity: "error",
     });
   }
-  if (property.default === undefined && property.type !== "array") {
+  if (
+    property.default === undefined &&
+    property.type !== "array" &&
+    property.type !== "object" &&
+    property.type !== "pagination"
+  ) {
+    console.log(property);
     errors.push({
       message: "Field default is required",
       attribute: "default",
@@ -139,16 +147,22 @@ const validateField = (
           severity: "error",
         });
       } else {
-        if (!property.rules.content.min) {
+        if (
+          property.rules.content.min === undefined ||
+          (property.rules.required === true && property.rules.content.min < 1)
+        ) {
           errors.push({
             message: "Array fields must have a minimum content length",
             attribute: "rules.content.min",
             property: key,
             severity: "error",
           });
-        } else if (property.rules.content.min < 1) {
+        } else if (
+          property.rules.required === true &&
+          property.rules.content.min < 1
+        ) {
           errors.push({
-            message: "Array fields must have a maximum content length",
+            message: "Array fields must have a minimum content length",
             attribute: "rules.content.min",
             property: key,
             severity: "error",
@@ -193,13 +207,15 @@ const validateField = (
             severity: "error",
           });
         }
-        if (!property.items.properties) {
+        if (!property.items.properties && property.items.type === "array") {
           errors.push({
             message: "Properties are required for array fields",
             attribute: "items.properties",
             property: key,
             severity: "error",
           });
+        } else if (property.items.type === "text") {
+          // validate text fields
         } else {
           for (let key in property.items.properties) {
             errors = errors.concat(
@@ -218,10 +234,10 @@ const validateField = (
           severity: "error",
         });
       } else {
-        if (!("url" in property.default)) {
+        if (!("href" in property.default)) {
           errors.push({
-            message: "Default url is required for link fields",
-            attribute: "image.default.url",
+            message: "Default href is required for link fields",
+            attribute: "image.default.href",
             property: key,
             severity: "error",
           });
@@ -355,10 +371,10 @@ export const validateModule = (
       attribute: "categories",
     });
   } else {
-    if (!Array.isArray(component.tags)) {
+    if (!Array.isArray(component.categories)) {
       errors.push({
-        message: "Component tags must be an array",
-        attribute: "tags",
+        message: "Component categories must be an array",
+        attribute: "categories",
       });
     } else {
       for (let category of component.categories) {
@@ -426,10 +442,14 @@ export const validateAll = async () => {
     const latest = full;
     const errors = validateModule(latest);
     if (errors.length > 0) {
-      console.error(chalk.red(`\nValidation failed for ${component.title}`));
+      console.error(
+        chalk.red(
+          `\nValidation failed for ${component.id} (${component.title})`
+        )
+      );
       console.log(formatErrors(errors));
     } else {
-      console.log(chalk.green(`\nValidation passed for ${component.title}`));
+      console.log(chalk.green(`\nValidation passed for (${component.title})`));
     }
   });
 };

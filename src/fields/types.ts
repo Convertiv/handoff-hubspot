@@ -12,7 +12,9 @@ export type FieldType =
   | "breadcrumb"
   | "video_file"
   | "file"
-  | "video_embed";
+  | "video_embed"
+  | "pagination"
+  | "boolean";
 
 export const FieldTypes: FieldType[] = [
   "text",
@@ -29,6 +31,8 @@ export const FieldTypes: FieldType[] = [
   "video_file",
   "file",
   "video_embed",
+  "pagination",
+  "boolean",
 ];
 
 export type ComponentType = "element" | "block";
@@ -104,6 +108,7 @@ export interface PropertyDefinition {
   description: string;
   rules: RulesDefinition;
   default: ValueDefinition;
+  properties?: { [key: string]: PropertyDefinition };
   items?: {
     type: FieldType;
     properties: { [key: string]: PropertyDefinition };

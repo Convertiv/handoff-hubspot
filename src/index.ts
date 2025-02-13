@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import axios from "axios";
-import fs, { read } from "fs";
+import fs from "fs";
 import transpile from "./transpile";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import * as prettier from "prettier";
-import path, { parse } from "path";
 import { createConfigCommand, readConfig } from "./config/command";
 import { buildFields } from "./fields/fields";
 import { formatErrors, validateAll, validateModule } from "./validate";
@@ -16,7 +15,6 @@ import {
 } from "./fields/types";
 import validateComponent from "./validate";
 import chalk from "chalk";
-import { version } from "os";
 
 const init = async () => {
   const config = readConfig();
@@ -63,7 +61,6 @@ export const fetchComponent: (
     const response = await request.get(`component/${componentId}/latest.json`);
     // Parse response and create a web component from response
     // check the response code
-    console.log(response.status);
     if (response.status !== 200) {
       console.error("Component not found");
       return null;
@@ -92,10 +89,15 @@ export const fetchComponentList: () => Promise<HandoffComponentListResponse> =
   };
 
 const open = (url: string) => {
-  const start = process.platform == "darwin" ? "open" : process.platform == "win32" ? "start" : "xdg-open";
+  const start =
+    process.platform == "darwin"
+      ? "open"
+      : process.platform == "win32"
+        ? "start"
+        : "xdg-open";
   console.log(url);
   require("child_process").exec(start + " " + url);
-}
+};
 
 const openDocs = async (componentId: string) => {
   const config = readConfig();
@@ -107,14 +109,13 @@ const openDocs = async (componentId: string) => {
   }
   const url = config.url;
   open(`${url}../system/component/${componentId}`);
-}
-
+};
 
 const listComponents = async () => {
   const data = await fetchComponentList();
   const components = data;
   const table = [];
-  
+
   components.forEach((component) => {
     table.push({
       id: component.id,
@@ -149,7 +150,8 @@ const buildMeta = (component: HandoffComponent) => {
     js_assets: [],
     other_assets: [],
     smart_type: "NOT_SMART",
-    categories: component.tags,
+    categories: component.categories,
+    tags: component.tags,
   };
   return metadata;
 };

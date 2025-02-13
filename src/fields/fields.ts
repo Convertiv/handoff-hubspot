@@ -1,5 +1,5 @@
 import buildButtonField from "./button";
-import { buildBaseGroupField } from "./generic";
+import { buildBaseGroupField, buildObjectGroupField } from "./generic";
 import buildImageField from "./image";
 import buildPlainTextField, {
   buildLinkTextField,
@@ -20,6 +20,9 @@ export const buildFields = (properties: any) => {
     switch (property.type) {
       case "array":
         fields.push(buildBaseGroupField(key, property));
+        break;
+      case "object":
+        fields.push(buildObjectGroupField(key, property));
         break;
       case "text":
         fields.push(buildPlainTextField(key, property));
