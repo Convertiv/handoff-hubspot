@@ -9,8 +9,9 @@ import fs from "fs";
 import { buildFields } from "../fields/fields";
 
 const buildMeta = (component: HandoffComponent) => {
+  const config = readConfig();
   const metadata = {
-    label: component.title,
+    label: config.modulePrefix + " " + component.title,
     css_assets: [],
     external_js: [],
     global: false,
@@ -46,16 +47,11 @@ const writeToModuleFile = async (
   component: string,
   name: string
 ) => {
+  console.log("COmponent id", component);
   // ensure dir exists
   const config = readConfig();
-  let filename = `${config.modulePrefix}${component}`;
-  filename = filename
-    .replace(/[^a-zA-Z0-9]/g, " ")
-    // remove double spaces
-    .replace(/\s+/g, " ")
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  let filename = `${component}`;
+  filename = filename.replace(/[^a-zA-Z0-9]/g, "-");
   const targetPath = `${config.modulesPath}/${filename}.module`;
   console.log(chalk.green(` - Writing ${name} to ${targetPath}`));
   if (!fs.existsSync(targetPath)) {
@@ -125,18 +121,18 @@ const buildModule = async (componentId: string, force: boolean) => {
     parser: "jinja-template",
     plugins: ["prettier-plugin-jinja-template"],
   });
-  writeToModuleFile(pretty, component.title, `module.html`);
-  writeToModuleFile(component.css, component.title, `module.css`);
+  writeToModuleFile(pretty, componentId, `module.html`);
+  writeToModuleFile(component.css, componentId, `module.css`);
   if (!component.jsCompiled) component.js = "/**\n * This file is blank\n */";
-  writeToModuleFile(component.jsCompiled, component.title, `module.js`);
+  writeToModuleFile(component.jsCompiled, componentId, `module.js`);
   writeToModuleFile(
     JSON.stringify(buildMeta(component), null, 2),
-    component.title,
+    componentId,
     `meta.json`
   );
   writeToModuleFile(
     JSON.stringify(buildFields(component.properties), null, 2),
-    component.title,
+    componentId,
     `fields.json`
   );
   return template;
