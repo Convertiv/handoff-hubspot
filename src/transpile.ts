@@ -42,12 +42,12 @@ const block = (node) => {
       // ask if the variable is a property
       if (properties[variable]) {
         findProperty = properties[variable];
-        if (
-          findProperty.type === "link"
-        ) {
+        if (findProperty.type === "link") {
           variableList[variableList.length - 1] = `${variable}_text`;
-        } else if (findProperty.type === "button" ||
-          findProperty.type === "breadcrumb") {
+        } else if (
+          findProperty.type === "button" ||
+          findProperty.type === "breadcrumb"
+        ) {
           variableList[variableList.length - 1] = `${variable}_text`;
         }
       }
@@ -58,7 +58,9 @@ const block = (node) => {
         // }
       } else {
         delete variableList[0];
-        variable = variableList.filter(variable => variable !== null).join(".");
+        variable = variableList
+          .filter((variable) => variable !== null)
+          .join(".");
       }
 
       // check to see if the block has an else block
@@ -111,52 +113,61 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
     current = properties[part];
   }
   return current;
-}
+};
 
 const mustache = (node) => {
   // check if the value is a variable or a string
   // @ts-ignore
-  let value = node.path.original, lookup;
-  const valueParts = value.split(".");
-  for (let part of valueParts) {
-    lookup = findPart(part, parentProperty);
-    if (lookup) {
-      parentProperty = lookup;
-      field = part;
+  let value = node.path.original,
+    lookup;
+
+  if (value === "this") {
+    value = `${iterator[iterator.length - 1]}.${field}`;
+  } else {
+    if (value.includes("../properties.")) {
+      value = value.replace("../properties.", "properties.");
     }
-    // the field name can not be = label
-    if (part === "this") {
-      // We're in a loop, so current prop is already set to the thing we're looping over
-      value = iterator[iterator.length - 1]; // get the last item in the iterator
-      parentProperty = currentProperty;
-    } else if (part === "properties") {
-      value = "module";
-    } else {
-      if (value === "metadata") {
-        // This is a special case where we're looking for a property on the metadata object
-        value = metadata(part);
+    const valueParts = value.split(".");
+    for (let part of valueParts) {
+      lookup = findPart(part, parentProperty);
+      if (lookup) {
+        parentProperty = lookup;
+        field = part;
+      }
+      // the field name can not be = label
+      if (part === "this") {
+        // We're in a loop, so current prop is already set to the thing we're looping over
+        value = iterator[iterator.length - 1]; // get the last item in the iterator
+        parentProperty = currentProperty;
+      } else if (part === "properties") {
+        value = "module";
       } else {
-        if (!parentProperty) {
-          value += `.${part}`;
-        } else if (
-          parentProperty.type === "link" ||
-          parentProperty.type === "button" ||
-          parentProperty.type === "breadcrumb"
-        ) {
-          if (part === "label" || part === "text") {
-            value += `.${field}_text`;
-          } else if (part === "href" || part === "url") {
-            value += `.${field}_url.href|escape_attr`;
-          } else if (part === "rel") {
-            value += `.${field}.rel|escape_attr`;
-          }
+        if (value === "metadata") {
+          // This is a special case where we're looking for a property on the metadata object
+          value = metadata(part);
         } else {
-          value += `.${part}`;
+          if (!parentProperty) {
+            value += `.${part}`;
+          } else if (
+            parentProperty.type === "link" ||
+            parentProperty.type === "button" ||
+            parentProperty.type === "breadcrumb"
+          ) {
+            if (part === "label" || part === "text") {
+              value += `.${field}_text`;
+            } else if (part === "href" || part === "url") {
+              value += `.${field}_url.href|escape_attr`;
+            } else if (part === "rel") {
+              value += `.${field}.rel|escape_attr`;
+            }
+          } else {
+            value += `.${part}`;
+          }
         }
       }
     }
   }
-  
+
   return `{{ ${value} }}`;
 };
 

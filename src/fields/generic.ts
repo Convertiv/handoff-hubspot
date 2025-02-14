@@ -2,6 +2,7 @@ import { parseRequired, safeLabel, safeName } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { PropertyDefinition } from "./types";
 import { buildFields } from "./fields";
+import buildPlainTextField from "./text";
 
 export const buildBaseGroupField = (
   id: string,
@@ -41,15 +42,14 @@ export const buildBaseGroupField = (
     },
     children: [],
   };
-  if (property.type === "array") {
+  if (property.items.type === "object") {
     group.children = buildFields(property.items.properties);
-  } else {
-    // TODO: Handle non object arrays
-    //group.children = buildFields(property.properties);
+  } else if (property.items.type === "text") {
+    property.items.name = property.name;
+    group.children = [buildPlainTextField(id, property.items)];
   }
   return group;
 };
-
 
 export const buildBaseField = (
   id: string,

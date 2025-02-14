@@ -109,10 +109,7 @@ export interface PropertyDefinition {
   rules: RulesDefinition;
   default: ValueDefinition;
   properties?: { [key: string]: PropertyDefinition };
-  items?: {
-    type: FieldType;
-    properties: { [key: string]: PropertyDefinition };
-  };
+  items?: PropertyDefinition;
 }
 
 export interface RulesDefinition {
