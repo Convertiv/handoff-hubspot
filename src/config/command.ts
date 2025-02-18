@@ -5,7 +5,7 @@ const defaultConfig = {
   url: "https://stage-ssc.handoff.com/api/",
   cssPath: "css/uds.css",
   modulesPath: "modules",
-  modulePrefix: "uds_",
+  modulePrefix: "UDS: ",
   username: "",
   password: "",
 };

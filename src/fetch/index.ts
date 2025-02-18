@@ -47,7 +47,6 @@ const writeToModuleFile = async (
   component: string,
   name: string
 ) => {
-  console.log("COmponent id", component);
   // ensure dir exists
   const config = readConfig();
   let filename = `${component}`;
