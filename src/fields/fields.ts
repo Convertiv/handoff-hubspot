@@ -4,6 +4,7 @@ import { buildBaseGroupField } from "./generic";
 import buildImageField from "./image";
 import { buildMenuField } from "./menu";
 import { buildObjectGroupField } from "./object";
+import buildSelectField from "./select";
 import buildPlainTextField, {
   buildLinkTextField,
   buildRichTextField,
@@ -31,6 +32,9 @@ export const buildFields = (properties: any) => {
         break;
       case "text":
         fields.push(buildPlainTextField(key, property));
+        break;
+      case "select":
+        fields.push(buildSelectField(key, property));
         break;
       case "richtext":
         fields.push(buildRichTextField(key, property));

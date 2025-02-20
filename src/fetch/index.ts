@@ -115,11 +115,16 @@ const buildModule = async (componentId: string, force: boolean) => {
   }
 
   const template = transpile(component.code, component.properties);
-
-  const pretty = await prettier.format(template, {
-    parser: "jinja-template",
-    plugins: ["prettier-plugin-jinja-template"],
-  });
+  let pretty = template;
+  try {
+    pretty = await prettier.format(template, {
+      parser: "jinja-template",
+      plugins: ["prettier-plugin-jinja-template"],
+    });
+  } catch (e) {
+    console.error(chalk.yellow("Error formatting template " + component.id), e.message);
+  }
+  
   writeToModuleFile(pretty, componentId, `module.html`);
   writeToModuleFile(component.css, componentId, `module.css`);
   if (!component.jsCompiled) component.js = "/**\n * This file is blank\n */";
