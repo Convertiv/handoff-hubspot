@@ -2,6 +2,7 @@ import { buildBooleanField } from "./boolean";
 import buildButtonField, { buildButtonLabelField } from "./button";
 import { buildBaseGroupField } from "./generic";
 import buildImageField from "./image";
+import { buildMenuField } from "./menu";
 import { buildObjectGroupField } from "./object";
 import buildPlainTextField, {
   buildLinkTextField,
@@ -48,6 +49,8 @@ export const buildFields = (properties: any) => {
       case "video_file":
         fields.push(buildVideoFileField(key, property));
         break;
+      case "menu":
+        fields.push(buildMenuField(key, property));
     }
   });
 
