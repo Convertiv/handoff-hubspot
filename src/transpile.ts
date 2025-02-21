@@ -56,12 +56,11 @@ const block = (node) => {
         // if (field) {
         //   target += `.${field}`;
         // }
-      } else {
-        delete variableList[0];
-        variable = variableList
-          .filter((variable) => variable !== null)
-          .join(".");
       }
+      variable = variableList
+        .slice(1)
+        .filter((variable) => variable !== null)
+        .join(".");
 
       // check to see if the block has an else block
       if (node.inverse) {
@@ -78,8 +77,16 @@ const block = (node) => {
         field = variable;
       }
       const current = variable[0];
+      let loop_target = "module";
+      if (iterator.length > 0) {
+        loop_target = iterator[iterator.length - 1];
+      }
+      variable = variableList
+        .slice(1)
+        .filter((variable) => variable !== null)
+        .join(".");
       iterator.push(`item_${current}`);
-      returnValue = `{% for item_${current} in module.${variable} %} ${program(node.program)} {% endfor %}`;
+      returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
       if (currentProperty) {
         chain.pop();
         currentProperty = chain[chain.length - 1];
@@ -160,6 +167,8 @@ const mustache = (node) => {
             } else if (part === "rel") {
               value += `.${field}.rel|escape_attr`;
             }
+          } else if (parentProperty.type === "url") {
+            value += `.${field}.href|escape_attr`;
           } else {
             value += `.${part}`;
           }
