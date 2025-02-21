@@ -9,6 +9,7 @@ import buildPlainTextField, {
   buildLinkTextField,
   buildRichTextField,
 } from "./text";
+import buildUrlField from "./url";
 import buildVideoFileField from "./video";
 
 /**
@@ -55,6 +56,10 @@ export const buildFields = (properties: any) => {
         break;
       case "menu":
         fields.push(buildMenuField(key, property));
+        break;
+      case "url":
+        fields.push(buildUrlField(key, property));
+        break;
     }
   });
 

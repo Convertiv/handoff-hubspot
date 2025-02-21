@@ -18,15 +18,18 @@ const buildButtonUrlField = (id: string, property: PropertyDefinition) => {
   let type = "EXTERNAL";
   if (typeof property.default === "object" && "href" in property.default) {
     href = property.default?.href;
-    if (href === "") {
-      href = "#";
-    }
-    if (href.startsWith("http")) {
-    } else if (href.startsWith("mailto:")) {
-      type = "EMAIL_ADDRESS";
-    } else if (href.startsWith("tel:")) {
-      type = "PHONE_NUMBER";
-    }
+  }
+  if (typeof property.default === "object" && "url" in property.default) {
+    href = property.default?.url;
+  }
+  if (href === "") {
+    href = "#";
+  }
+  if (href.startsWith("http")) {
+  } else if (href.startsWith("mailto:")) {
+    type = "EMAIL_ADDRESS";
+  } else if (href.startsWith("tel:")) {
+    type = "PHONE_NUMBER";
   }
 
   build["default"] = {

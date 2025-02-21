@@ -121,7 +121,6 @@ const listComponents = async () => {
       "latest version": component.version,
     });
   });
-  console.table(table);
 };
 
 /**

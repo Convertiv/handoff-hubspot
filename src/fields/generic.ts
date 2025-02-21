@@ -22,7 +22,6 @@ export const buildBaseGroupField = (
   default: any;
   children: any[];
 } => {
-  console.log("buildBaseGroupField", id, property);
   const group = {
     id: `${id}_${uuidv4()}`,
     name: safeLabel(id),

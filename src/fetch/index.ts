@@ -10,11 +10,15 @@ import { buildFields } from "../fields/fields";
 
 const buildMeta = (component: HandoffComponent) => {
   const config = readConfig();
+  let global = false;
+  if (component.group === "Navigation") {
+    global = true;
+  }
   const metadata = {
     label: config.modulePrefix + " " + component.title,
     css_assets: [],
     external_js: [],
-    global: false,
+    global,
     help_text: component.description,
     content_types: [
       "LANDING_PAGE",
@@ -122,9 +126,12 @@ const buildModule = async (componentId: string, force: boolean) => {
       plugins: ["prettier-plugin-jinja-template"],
     });
   } catch (e) {
-    console.error(chalk.yellow("Error formatting template " + component.id), e.message);
+    console.error(
+      chalk.yellow("Error formatting template " + component.id),
+      e.message
+    );
   }
-  
+
   writeToModuleFile(pretty, componentId, `module.html`);
   writeToModuleFile(component.css, componentId, `module.css`);
   if (!component.jsCompiled) component.js = "/**\n * This file is blank\n */";

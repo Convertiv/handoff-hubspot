@@ -224,6 +224,22 @@ const validateField = (
         }
       }
     }
+
+    if (property.type === "object") {
+      if (!property.properties) {
+        errors.push({
+          message: "Properties are required for object fields",
+          attribute: "properties",
+          property: key,
+          severity: "error",
+        });
+      } else {
+        for (let key in property.properties) {
+          errors = errors.concat(validateField(property.properties[key], key));
+        }
+      }
+    }
+
     if (property.type === "link") {
       if (!property.default || typeof property.default !== "object") {
         errors.push({

@@ -35,6 +35,9 @@ export const buildLinkTextField = (
   if (typeof property.default === "object" && "label" in property.default) {
     defaultText = property.default?.label;
   }
+  if (typeof property.default === "object" && "text" in property.default) {
+    defaultText = property.default?.text;
+  }
   build["default"] = defaultText;
   return build;
 };

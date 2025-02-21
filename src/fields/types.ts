@@ -9,6 +9,7 @@ export type FieldType =
   | "image"
   | "button"
   | "link"
+  | "url"
   | "breadcrumb"
   | "video_file"
   | "file"
@@ -28,6 +29,7 @@ export const FieldTypes: FieldType[] = [
   "image",
   "button",
   "link",
+  "url",
   "breadcrumb",
   "video_file",
   "file",
