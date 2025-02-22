@@ -146,6 +146,7 @@ const validateField = (
           severity: "error",
         });
       } else {
+       
         if (
           property.rules.content.min === undefined ||
           (property.rules.required === true && property.rules.content.min < 1)

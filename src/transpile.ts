@@ -30,6 +30,7 @@ const transpile: (
  */
 const block = (node) => {
   const variableList: string[] = node.params[0].original.split(".");
+  
   let variable = variableList[variableList.length - 1];
   let returnValue;
   switch (node.path.original) {
@@ -61,7 +62,8 @@ const block = (node) => {
         formatValue += ` type="${parentProperty.type}"  #}`;
         if (parentProperty.type === "menu") {
           variable = variableList
-            .slice(1)
+            // Trim off the front if we're dropping an interator in
+            .slice(iterator.length)
             .filter((variable) => variable !== null)
             .join(".");
           let context = `menu_${uuidv4().substring(1, 6)}`;
@@ -70,7 +72,7 @@ const block = (node) => {
         }
       }
 
-      returnValue = `${formatValue}\n${program(node.program)}`;
+      returnValue = `${formatValue}\n${program(node.program)}{# end field #}`;
       break;
     case "if":
       let target = "module";
@@ -123,7 +125,10 @@ const block = (node) => {
         .join(".");
       iterator.push(`item_${current}`);
       if (inMenuContext) {
-        returnValue = `{% for item_${current} in ${inMenuContext}.children %} ${program(node.program)} {% endfor %}`;
+        returnValue = `{% for item_${current} in ${inMenuContext}.children %} `; 
+        // ENsure that menu context is destroyed so it doesn't polute down the tree
+        inMenuContext = undefined;
+        returnValue += `${ program(node.program) } {% endfor %}`;
       } else {
         returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
       }
@@ -188,7 +193,6 @@ const mustache = (node) => {
     const valueParts = value.split(".");
     for (let part of valueParts) {
       lookup = findPart(part, parentProperty);
-      console.log(part, lookup);
       if (lookup) {
         parentProperty = lookup;
         // @ts-ignore
