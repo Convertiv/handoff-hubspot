@@ -34,6 +34,10 @@ const block = (node) => {
   let returnValue;
   switch (node.path.original) {
     case "field":
+      let parentTarget = "module";
+      if (iterator.length > 0) {
+        parentTarget = iterator[iterator.length - 1];
+      }
       let formatValue = `{# field ${node.params[0].original}`;
       // figure out if what the field type is
       // get the parent
@@ -56,8 +60,12 @@ const block = (node) => {
       if (parentProperty) {
         formatValue += ` type="${parentProperty.type}"  #}`;
         if (parentProperty.type === "menu") {
+          variable = variableList
+            .slice(1)
+            .filter((variable) => variable !== null)
+            .join(".");
           let context = `menu_${uuidv4().substring(1, 6)}`;
-          formatValue += `\n{% set ${context} = menu(module.${node.params[0].original}) %}`;
+          formatValue += `\n{% set ${context} = menu(${parentTarget}.${variable}) %}`;
           inMenuContext = context;
         }
       }
