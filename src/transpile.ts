@@ -1,12 +1,13 @@
 import Handlebars from "handlebars";
 import { PropertyDefinition } from "./fields/types";
-
+import { v4 as uuidv4 } from "uuid";
 const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
 let currentProperty: PropertyDefinition | null = null;
 let parentProperty: PropertyDefinition | null = null;
 let field;
+let inMenuContext;
 
 /**
  * Transpile handlebars code to hubspot code
@@ -33,8 +34,35 @@ const block = (node) => {
   let returnValue;
   switch (node.path.original) {
     case "field":
+      let formatValue = `{# field ${node.params[0].original}`;
       // figure out if what the field type is
-      returnValue = `{# field ${node.params[0].value} #}\n${program(node.program)}`;
+      // get the parent
+      let first = variableList[0];
+
+      let parentProperty = properties[first];
+      if (variableList.length > 1) {
+        // iterate starting from the second item in the list
+        for (let i = 1; i < variableList.length; i++) {
+          let part = variableList[i];
+          if (parentProperty) {
+            if (parentProperty.type === "array") {
+              parentProperty = parentProperty.items.properties[part];
+            } else if (parentProperty.type === "object") {
+              parentProperty = parentProperty.properties[part];
+            }
+          }
+        }
+      }
+      if (parentProperty) {
+        formatValue += ` type="${parentProperty.type}"  #}`;
+        if (parentProperty.type === "menu") {
+          let context = `menu_${uuidv4().substring(1, 6)}`;
+          formatValue += `\n{% set ${context} = menu(module.${node.params[0].original}) %}`;
+          inMenuContext = context;
+        }
+      }
+
+      returnValue = `${formatValue}\n${program(node.program)}`;
       break;
     case "if":
       let target = "module";
@@ -86,7 +114,11 @@ const block = (node) => {
         .filter((variable) => variable !== null)
         .join(".");
       iterator.push(`item_${current}`);
-      returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
+      if (inMenuContext) {
+        returnValue = `{% for item_${current} in ${inMenuContext}.children %} ${program(node.program)} {% endfor %}`;
+      } else {
+        returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
+      }
       if (currentProperty) {
         chain.pop();
         currentProperty = chain[chain.length - 1];
@@ -110,7 +142,6 @@ const metadata = (part: string) => {
 
 const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   let current;
-  console.log("find-parent", part, parent);
   if (parent) {
     if (parent.type === "object" || parent.type === "array") {
       if (parent.properties) {
@@ -149,6 +180,7 @@ const mustache = (node) => {
     const valueParts = value.split(".");
     for (let part of valueParts) {
       lookup = findPart(part, parentProperty);
+      console.log(part, lookup);
       if (lookup) {
         parentProperty = lookup;
         // @ts-ignore
@@ -166,7 +198,6 @@ const mustache = (node) => {
           // This is a special case where we're looking for a property on the metadata object
           value = metadata(part);
         } else {
-          console.log("part", part, parentProperty);
           if (!parentProperty) {
             value += `.${part}`;
           } else if (
