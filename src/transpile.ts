@@ -110,11 +110,23 @@ const metadata = (part: string) => {
 
 const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   let current;
-  if (parent && (parent.type === "object" || parent.type === "array")) {
-    if (parent.properties) {
-      current = parent.properties[part];
-    } else if (parent.items?.properties) {
-      current = parent.items.properties[part];
+  console.log("find-parent", part, parent);
+  if (parent) {
+    if (parent.type === "object" || parent.type === "array") {
+      if (parent.properties) {
+        current = parent.properties[part];
+      } else if (parent.items?.properties) {
+        current = parent.items.properties[part];
+      }
+    } else if (
+      parent.type === "link" ||
+      parent.type === "button" ||
+      parent.type === "breadcrumb" ||
+      parent.type === "image"
+    ) {
+      current = parent;
+    } else {
+      current = properties[part];
     }
   } else {
     current = properties[part];
@@ -139,7 +151,8 @@ const mustache = (node) => {
       lookup = findPart(part, parentProperty);
       if (lookup) {
         parentProperty = lookup;
-        field = part;
+        // @ts-ignore
+        field = parentProperty.id;
       }
       // the field name can not be = label
       if (part === "this") {
@@ -153,6 +166,7 @@ const mustache = (node) => {
           // This is a special case where we're looking for a property on the metadata object
           value = metadata(part);
         } else {
+          console.log("part", part, parentProperty);
           if (!parentProperty) {
             value += `.${part}`;
           } else if (
@@ -175,6 +189,7 @@ const mustache = (node) => {
         }
       }
     }
+    parentProperty = null;
   }
 
   return `{{ ${value} }}`;
