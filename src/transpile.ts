@@ -30,7 +30,7 @@ const transpile: (
  */
 const block = (node) => {
   const variableList: string[] = node.params[0].original.split(".");
-  
+
   let variable = variableList[variableList.length - 1];
   let returnValue;
   switch (node.path.original) {
@@ -76,17 +76,18 @@ const block = (node) => {
       break;
     case "if":
       let target = "module";
-      let findProperty;
+      let findProperty = findParent(variableList);
       // ask if the variable is a property
-      if (properties[variable]) {
-        findProperty = properties[variable];
+      if (findProperty) {
         if (findProperty.type === "link") {
-          variableList[variableList.length - 1] = `${variable}_text`;
+          variableList[variableList.length - 2] = `${findProperty.id}_${variable}`;
+          variableList[variableList.length - 1] = "href";
         } else if (
           findProperty.type === "button" ||
           findProperty.type === "breadcrumb"
         ) {
-          variableList[variableList.length - 1] = `${variable}_text`;
+          variableList[variableList.length - 2] = `${findProperty.id}_${variable}`;
+          variableList[variableList.length - 1] = "href";
         }
       }
       if (iterator.length > 0) {
@@ -125,10 +126,10 @@ const block = (node) => {
         .join(".");
       iterator.push(`item_${current}`);
       if (inMenuContext) {
-        returnValue = `{% for item_${current} in ${inMenuContext}.children %} `; 
+        returnValue = `{% for item_${current} in ${inMenuContext}.children %} `;
         // ENsure that menu context is destroyed so it doesn't polute down the tree
         inMenuContext = undefined;
-        returnValue += `${ program(node.program) } {% endfor %}`;
+        returnValue += `${program(node.program)} {% endfor %}`;
       } else {
         returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
       }
@@ -178,6 +179,14 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   return current;
 };
 
+const findParent = (parts: string[]) => {
+  let parent;
+  for (let part of parts) {
+    parent = findPart(part, parent);
+  }
+  return parent;
+}
+
 const mustache = (node) => {
   // check if the value is a variable or a string
   // @ts-ignore
@@ -186,6 +195,9 @@ const mustache = (node) => {
 
   if (value === "this") {
     value = `${iterator[iterator.length - 1]}.${field}`;
+  } else if (value === '@index') {
+    value = `loop.index`;
+
   } else {
     if (value.includes("../properties.")) {
       value = value.replace("../properties.", "properties.");
@@ -246,6 +258,8 @@ const mustache = (node) => {
 export const program: (program: hbs.AST.Program) => string = (program) => {
   const buffer = [];
   for (let node of program.body) {
+
+
     switch (node.type) {
       case "Program":
         // recursively call the program function
@@ -259,6 +273,7 @@ export const program: (program: hbs.AST.Program) => string = (program) => {
         buffer.push(node.chars);
         break;
       case "ContentStatement":
+
         // @ts-ignore
         buffer.push(node.value);
         break;
