@@ -11,7 +11,7 @@ import {
 } from "./fields/types";
 import validateComponent from "./validate";
 import chalk from "chalk";
-import buildModule, { fetchAll, writeSharedCss } from "./fetch";
+import buildModule, { fetchAll, writeSharedCss, writeSharedJs } from "./fetch";
 
 const init = async () => {
   const config = readConfig();
@@ -40,6 +40,18 @@ const fetchSharedStyles: () => Promise<void> = async () => {
   try {
     const response = await request.get("component/shared.css");
     writeSharedCss(response.data, `uds.css`);
+  } catch (e) {
+    console.error(e);
+  }
+};
+/**
+ * Fetch shared styles from handoff api
+ */
+const fetchSharedScripts: () => Promise<void> = async () => {
+  const request = await init();
+  try {
+    const response = await request.get("component/shared.js");
+    writeSharedJs(response.data, `uds.js`);
   } catch (e) {
     console.error(e);
   }
@@ -140,6 +152,13 @@ const main = async () => {
       describe: "Fetch shared styles from handoff",
       handler: async () => {
         fetchSharedStyles();
+      },
+    })
+    .command({
+      command: "scripts",
+      describe: "Fetch shared scripts from handoff",
+      handler: async () => {
+        fetchSharedScripts();
       },
     })
     .command({

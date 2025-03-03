@@ -95,6 +95,29 @@ export const writeSharedCss = async (template: string, name: string) => {
 };
 
 /**
+ * Write a file to the file system
+ * @param template
+ * @param id
+ */
+export const writeSharedJs = async (template: string, name: string) => {
+  // ensure dir exists
+  const config = readConfig();
+  const targetPath = config.jsPath;
+  if (!fs.existsSync(targetPath)) {
+    fs.mkdirSync(targetPath, { recursive: true });
+  }
+  if (template) {
+    fs.writeFile(`${targetPath}/${name}`, template, (err: any) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+  } else {
+    console.error("No template found for ", name);
+  }
+};
+
+/**
  * Build a web component from a handoff component
  * @param componentId
  * @returns
