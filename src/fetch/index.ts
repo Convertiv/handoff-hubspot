@@ -123,6 +123,7 @@ export const writeSharedJs = async (template: string, name: string) => {
  * @returns
  */
 const buildModule = async (componentId: string, force: boolean) => {
+  const config = readConfig();
   const data = await fetchComponent(componentId);
   const component = data;
   // Validate the component
@@ -157,7 +158,12 @@ const buildModule = async (componentId: string, force: boolean) => {
 
   writeToModuleFile(pretty, componentId, `module.html`);
   writeToModuleFile(component.css, componentId, `module.css`);
-  if (!component.jsCompiled) component.js = "/**\n * This file is blank\n */";
+  if (!config.moduleJS) {
+    component.js =
+      "/**\n * We are using the core compiled JS. This file is blank \n */";
+  } else {
+    if (!component.jsCompiled) component.js = "/**\n * This file is blank\n */";
+  }
   writeToModuleFile(component.jsCompiled, componentId, `module.js`);
   writeToModuleFile(
     JSON.stringify(buildMeta(component), null, 2),

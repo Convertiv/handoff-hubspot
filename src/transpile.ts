@@ -80,14 +80,22 @@ const block = (node) => {
       // ask if the variable is a property
       if (findProperty) {
         if (findProperty.type === "link") {
-          variableList[variableList.length - 2] = `${findProperty.id}_${variable}`;
+          variableList[variableList.length - 2] =
+            `${findProperty.id}_${variable}`;
           variableList[variableList.length - 1] = "href";
         } else if (
           findProperty.type === "button" ||
           findProperty.type === "breadcrumb"
         ) {
-          variableList[variableList.length - 2] = `${findProperty.id}_${variable}`;
-          variableList[variableList.length - 1] = "href";
+          // We're checking to see if a button href is set
+          if (findProperty.id !== variable) {
+            variableList[variableList.length - 2] =
+              `${findProperty.id}_${variable}`;
+            variableList[variableList.length - 1] = "href";
+          } else {
+            variableList[variableList.length - 1] = `${findProperty.id}_url`;
+            variableList.push("href");
+          }
         }
       }
       if (iterator.length > 0) {
@@ -156,6 +164,7 @@ const metadata = (part: string) => {
 
 const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   let current;
+  console.log("FIND PART", part, parent?.type);
   if (parent) {
     if (parent.type === "object" || parent.type === "array") {
       if (parent.properties) {
@@ -170,6 +179,8 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
       parent.type === "image"
     ) {
       current = parent;
+    } else if (parent.type === "video_embed") {
+      console.log("FOUND VIDEO EMBED");
     } else {
       current = properties[part];
     }
@@ -182,10 +193,13 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
 const findParent = (parts: string[]) => {
   let parent;
   for (let part of parts) {
-    parent = findPart(part, parent);
+    if (part === "properties") {
+    } else {
+      parent = findPart(part, parent);
+    }
   }
   return parent;
-}
+};
 
 const mustache = (node) => {
   // check if the value is a variable or a string
@@ -195,14 +209,14 @@ const mustache = (node) => {
 
   if (value === "this") {
     value = `${iterator[iterator.length - 1]}.${field}`;
-  } else if (value === '@index') {
+  } else if (value === "@index") {
     value = `loop.index`;
-
   } else {
     if (value.includes("../properties.")) {
       value = value.replace("../properties.", "properties.");
     }
     const valueParts = value.split(".");
+    const parentLookup = findParent(valueParts);
     for (let part of valueParts) {
       lookup = findPart(part, parentProperty);
       if (lookup) {
@@ -222,6 +236,7 @@ const mustache = (node) => {
           // This is a special case where we're looking for a property on the metadata object
           value = metadata(part);
         } else {
+          console.log(part, parentLookup?.type || "no type");
           if (!parentProperty) {
             value += `.${part}`;
           } else if (
@@ -238,6 +253,12 @@ const mustache = (node) => {
             }
           } else if (parentProperty.type === "url") {
             value += `.${field}.href|escape_attr`;
+          } else if (parentProperty.type === "video_embed") {
+            if (part === "poster") {
+              value += `_poster`;
+            } else {
+              value += `.${field}`;
+            }
           } else {
             value += `.${part}`;
           }
@@ -258,8 +279,6 @@ const mustache = (node) => {
 export const program: (program: hbs.AST.Program) => string = (program) => {
   const buffer = [];
   for (let node of program.body) {
-
-
     switch (node.type) {
       case "Program":
         // recursively call the program function
@@ -273,7 +292,6 @@ export const program: (program: hbs.AST.Program) => string = (program) => {
         buffer.push(node.chars);
         break;
       case "ContentStatement":
-
         // @ts-ignore
         buffer.push(node.value);
         break;

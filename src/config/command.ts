@@ -5,6 +5,7 @@ const defaultConfig = {
   url: "https://stage-ssc.handoff.com/api/",
   cssPath: "css/uds.css",
   jsPath: "js/uds.js",
+  moduleJS: false,
   modulesPath: "modules",
   modulePrefix: "UDS: ",
   username: "",
@@ -43,6 +44,13 @@ export const createConfigCommand = async () => {
     name: "value",
     message: "Where should the shared js be saved?",
     initial: defaultConfig.jsPath,
+  });
+  const moduleJS = await prompts({
+    type: "confirm",
+    name: "value",
+    message:
+      "Should we pull js for individual modules, or use the centrally packaged js?",
+    initial: defaultConfig.moduleJS,
   });
   // Ask for the modules path
   const modulesPath = await prompts({
@@ -83,6 +91,7 @@ export const createConfigCommand = async () => {
     url: url.value,
     cssPath: cssPath.value,
     jsPath: jsPath.value,
+    moduleJS: moduleJS.value,
     modulesPath: modulesPath.value,
     modulePrefix: modulePrefix.value,
     username: username.value,

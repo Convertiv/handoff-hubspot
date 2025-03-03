@@ -50,7 +50,13 @@ const fetchSharedStyles: () => Promise<void> = async () => {
 const fetchSharedScripts: () => Promise<void> = async () => {
   const request = await init();
   try {
-    const response = await request.get("component/shared.js");
+    // get config
+    const config = readConfig();
+    if (config.moduleJS) {
+      console.log("Module JS is enabled, skipping shared js");
+      return;
+    }
+    const response = await request.get("component/main.js");
     writeSharedJs(response.data, `uds.js`);
   } catch (e) {
     console.error(e);
@@ -151,6 +157,7 @@ const main = async () => {
       command: "styles",
       describe: "Fetch shared styles from handoff",
       handler: async () => {
+        console.log(`-- Fetching shared component css ---\n`);
         fetchSharedStyles();
       },
     })
@@ -158,6 +165,7 @@ const main = async () => {
       command: "scripts",
       describe: "Fetch shared scripts from handoff",
       handler: async () => {
+        console.log(`-- Fetching shared component js ---\n`);
         fetchSharedScripts();
       },
     })

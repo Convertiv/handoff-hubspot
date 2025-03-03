@@ -1,4 +1,5 @@
 import { buildBaseField } from "./generic";
+import { buildRichTextField } from "./text";
 import { PropertyDefinition } from "./types";
 import { ImageValue } from "./types";
 
@@ -26,6 +27,11 @@ const buildImageField = (id: string, property: PropertyDefinition) => {
     max_width: property.rules.dimensions?.max?.width || 128,
     max_height: property.rules.dimensions?.max?.width || 128,
   };
+  return build;
+};
+
+export const buildIconField = (id: string, property: PropertyDefinition) => {
+  const build = buildRichTextField(id, property);
   return build;
 };
 export default buildImageField;

@@ -1,7 +1,7 @@
 import { buildBooleanField } from "./boolean";
 import buildButtonField, { buildButtonLabelField } from "./button";
 import { buildBaseGroupField } from "./generic";
-import buildImageField from "./image";
+import buildImageField, { buildIconField } from "./image";
 import { buildMenuField } from "./menu";
 import { buildObjectGroupField } from "./object";
 import buildSelectField from "./select";
@@ -10,7 +10,10 @@ import buildPlainTextField, {
   buildRichTextField,
 } from "./text";
 import buildUrlField from "./url";
-import buildVideoFileField from "./video";
+import buildVideoFileField, {
+  buildVideoEmbedField,
+  buildVideoPosterField,
+} from "./video";
 
 /**
  * Build fields from properties
@@ -47,12 +50,19 @@ export const buildFields = (properties: any) => {
         fields.push(buildButtonField(key, property));
         fields.push(buildLinkTextField(key, property));
         break;
+      case "icon":
+        fields.push(buildIconField(key, property));
+        break;
       case "button":
         fields.push(buildButtonField(key, property));
         fields.push(buildButtonLabelField(key, property));
         break;
       case "video_file":
         fields.push(buildVideoFileField(key, property));
+        break;
+      case "video_embed":
+        fields.push(buildVideoEmbedField(key, property));
+        fields.push(buildVideoPosterField(key, property));
         break;
       case "menu":
         fields.push(buildMenuField(key, property));
