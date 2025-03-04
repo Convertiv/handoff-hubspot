@@ -174,11 +174,11 @@ const buildModule = async (componentId: string, force: boolean) => {
     "\n\n" +
     pretty;
   writeToModuleFile(pretty, componentId, `module.html`);
-  writeToModuleFile(
-    JSON.stringify(header, null, 2),
-    componentId,
-    `handoff.json`
-  );
+  // writeToModuleFile(
+  //   JSON.stringify(header, null, 2),
+  //   componentId,
+  //   `handoff.json`
+  // );
   writeToModuleFile(component.css, componentId, `module.css`);
 
   let js;
