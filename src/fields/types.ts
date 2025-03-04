@@ -7,6 +7,7 @@ export type FieldType =
   | "checkbox"
   | "select"
   | "image"
+  | "icon"
   | "button"
   | "link"
   | "url"
@@ -27,6 +28,7 @@ export const FieldTypes: FieldType[] = [
   "checkbox",
   "select",
   "image",
+  "icon",
   "button",
   "link",
   "url",
@@ -43,6 +45,7 @@ export type ComponentType = "element" | "block";
 
 export type HandoffComponent = {
   id: string;
+  version: string;
   title: string;
   description: string;
   type: FieldType;

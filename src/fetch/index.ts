@@ -155,16 +155,43 @@ const buildModule = async (componentId: string, force: boolean) => {
       e.message
     );
   }
+  const url = new URL(config.url);
 
+  const header = {
+    title: component.title,
+    description: component.description,
+    group: component.group,
+    version: component.version,
+    last_updated: new Date().toISOString(),
+    link: `${url.origin}/system/component/${component.id}`,
+  };
+  pretty =
+    `{#\n  ` +
+    Object.keys(header)
+      .map((key) => `${key}: ${header[key]}`)
+      .join("\n  ") +
+    `\n#}` +
+    "\n\n" +
+    pretty;
   writeToModuleFile(pretty, componentId, `module.html`);
+  writeToModuleFile(
+    JSON.stringify(header, null, 2),
+    componentId,
+    `handoff.json`
+  );
   writeToModuleFile(component.css, componentId, `module.css`);
+
+  let js;
   if (!config.moduleJS) {
-    component.js =
-      "/**\n * We are using the core compiled JS. This file is blank \n */";
+    js = "/**\n * We are using the core compiled JS. This file is blank \n */";
   } else {
-    if (!component.jsCompiled) component.js = "/**\n * This file is blank\n */";
+    if (!component.jsCompiled) {
+      js = "/**\n * This file is blank\n */";
+    } else {
+      js = component.jsCompiled;
+    }
   }
-  writeToModuleFile(component.jsCompiled, componentId, `module.js`);
+  writeToModuleFile(js, componentId, `module.js`);
   writeToModuleFile(
     JSON.stringify(buildMeta(component), null, 2),
     componentId,

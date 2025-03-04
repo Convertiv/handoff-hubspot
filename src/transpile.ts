@@ -111,7 +111,7 @@ const block = (node) => {
 
       // check to see if the block has an else block
       if (node.inverse) {
-        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% else %} \`${program(node.inverse)} {% endif %}`;
+        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% else %} ${program(node.inverse)} {% endif %}`;
       } else {
         returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% endif %}`;
       }
@@ -164,7 +164,6 @@ const metadata = (part: string) => {
 
 const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   let current;
-  console.log("FIND PART", part, parent?.type);
   if (parent) {
     if (parent.type === "object" || parent.type === "array") {
       if (parent.properties) {
@@ -236,7 +235,6 @@ const mustache = (node) => {
           // This is a special case where we're looking for a property on the metadata object
           value = metadata(part);
         } else {
-          console.log(part, parentLookup?.type || "no type");
           if (!parentProperty) {
             value += `.${part}`;
           } else if (
