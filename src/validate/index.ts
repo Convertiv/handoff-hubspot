@@ -110,7 +110,10 @@ const validateField = (
       });
     }
     if (property.rules.content) {
-      if (!property.rules.content.min && property.rules.required === true) {
+      if (
+        property.rules.content.min === undefined &&
+        property.rules.required === true
+      ) {
         errors.push({
           message: "Content rules must have a minimum length",
           attribute: "rules.content.min",
@@ -118,7 +121,7 @@ const validateField = (
           severity: "warning",
         });
       }
-      if (!property.rules.content.max) {
+      if (property.rules.content.max === undefined) {
         errors.push({
           message: "Content rules must have a maximum length",
           attribute: "rules.content.min",
@@ -137,6 +140,33 @@ const validateField = (
         });
       }
     }
+    if (property.type === "number") {
+      if (!property.rules.content) {
+        errors.push({
+          message: "Content rules are required for text fields",
+          attribute: "rules.content",
+          property: key,
+          severity: "error",
+        });
+      } else {
+        if (property.rules.content.min === undefined) {
+          errors.push({
+            message: "Content rules must have a minimum length",
+            attribute: "rules.content.min",
+            property: key,
+            severity: "error",
+          });
+        }
+        if (property.rules.content.max === undefined) {
+          errors.push({
+            message: "Content rules must have a maximum length",
+            attribute: "rules.content.max",
+            property: key,
+            severity: "error",
+          });
+        }
+      }
+    }
     if (property.type === "array") {
       if (!property.rules.content) {
         errors.push({
@@ -146,7 +176,6 @@ const validateField = (
           severity: "error",
         });
       } else {
-       
         if (
           property.rules.content.min === undefined ||
           (property.rules.required === true && property.rules.content.min < 1)

@@ -83,6 +83,12 @@ const block = (node) => {
           variableList[variableList.length - 2] =
             `${findProperty.id}_${variable}`;
           variableList[variableList.length - 1] = "href";
+        } else if (findProperty.type === "video_embed") {
+          if (variable === "poster") {
+            variableList[variableList.length - 1] = `${findProperty.id}_poster`;
+          } else {
+            //variableList[variableList.length - 1] = `${findProperty.id}_url`;
+          }
         } else if (
           findProperty.type === "button" ||
           findProperty.type === "breadcrumb"
@@ -179,7 +185,6 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
     ) {
       current = parent;
     } else if (parent.type === "video_embed") {
-      console.log("FOUND VIDEO EMBED");
     } else {
       current = properties[part];
     }
@@ -254,8 +259,9 @@ const mustache = (node) => {
           } else if (parentProperty.type === "video_embed") {
             if (part === "poster") {
               value += `_poster`;
+            } else if (part === "url") {
             } else {
-              value += `.${field}`;
+              value += `.${part}`;
             }
           } else {
             value += `.${part}`;

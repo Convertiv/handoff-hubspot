@@ -7,6 +7,7 @@ import { buildObjectGroupField } from "./object";
 import buildSelectField from "./select";
 import buildPlainTextField, {
   buildLinkTextField,
+  buildNumberField,
   buildRichTextField,
 } from "./text";
 import buildUrlField from "./url";
@@ -69,6 +70,9 @@ export const buildFields = (properties: any) => {
         break;
       case "url":
         fields.push(buildUrlField(key, property));
+        break;
+      case "number":
+        fields.push(buildNumberField(key, property));
         break;
     }
   });

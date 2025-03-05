@@ -21,6 +21,26 @@ export const buildRichTextField = (
   return build;
 };
 
+export const buildNumberField = (id: string, property: PropertyDefinition) => {
+  const build = buildBaseField(id, property);
+  build["type"] = "number";
+  build["min"] = property.rules.content.min;
+  build["max"] = property.rules.content.max;
+  build["step"] = 1;
+  build["prefix"] = "";
+  build["suffix"] = "";
+  if (property.rules.content.prefix) {
+    build["prefix"] = property.rules.content.prefix;
+  }
+  if (property.rules.content.suffix) {
+    build["suffix"] = property.rules.content.suffix;
+  }
+  if (property.rules.pattern) {
+    build["validation_message"] = property.rules.pattern;
+  }
+  return build;
+};
+
 export const buildLinkTextField = (
   id: string,
   property: PropertyDefinition

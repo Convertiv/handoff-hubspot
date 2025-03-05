@@ -85,6 +85,19 @@ export interface ImageValue {
   alt: string;
 }
 
+export interface ImageValue {
+  src: string;
+  alt: string;
+}
+
+export interface VideoValue {
+  src: string;
+  poster: {
+    src: string;
+    alt: string;
+  };
+}
+
 export interface ButtonValue {
   label: string;
   url: string;
@@ -145,6 +158,8 @@ export interface RulesDefinition {
   content?: {
     min: number;
     max: number;
+    prefix?: string;
+    suffix?: string;
   };
   pattern?: string;
 }

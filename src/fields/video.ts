@@ -1,6 +1,6 @@
 import { buildBaseField, buildBaseGroupField } from "./generic";
 import buildImageField from "./image";
-import { buildRichTextField } from "./text";
+import buildPlainTextField, { buildRichTextField } from "./text";
 import { PropertyDefinition } from "./types";
 import buildUrlField from "./url";
 
@@ -11,6 +11,7 @@ export const buildVideoFileField = (
   const build = buildBaseField(id, property);
   build["type"] = "file";
   build["display_width"] = null;
+
   return build;
 };
 
@@ -23,6 +24,16 @@ export const buildVideoPosterField = (
   build["name"] = `${id}_poster`;
   build["label"] = build["label"] + " Poster";
   build["display_width"] = null;
+  if (
+    typeof property.default === "object" &&
+    "poster" in property.default &&
+    typeof property.default.poster === "object"
+  ) {
+    if ("src" in property.default.poster)
+      build["default"]["src"] = property.default.poster.src;
+    if ("alt" in property.default.poster)
+      build["default"]["alt"] = property.default.poster.alt;
+  }
   return build;
 };
 
@@ -30,7 +41,9 @@ export const buildVideoEmbedField = (
   id: string,
   property: PropertyDefinition
 ) => {
-  const build = buildUrlField(id, property);
+  const build = buildPlainTextField(id, property);
+  if (typeof property.default === "object" && "url" in property.default)
+    build["default"] = property.default.url || "";
   return build;
 };
 export default buildVideoFileField;
