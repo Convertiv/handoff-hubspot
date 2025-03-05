@@ -1,5 +1,5 @@
 import { buildBaseField } from "./generic";
-import { buildRichTextField } from "./text";
+import buildPlainTextField, { buildRichTextField } from "./text";
 import { PropertyDefinition } from "./types";
 import { ImageValue } from "./types";
 
@@ -31,7 +31,7 @@ const buildImageField = (id: string, property: PropertyDefinition) => {
 };
 
 export const buildIconField = (id: string, property: PropertyDefinition) => {
-  const build = buildRichTextField(id, property);
+  const build = buildPlainTextField(id, property);
   return build;
 };
 export default buildImageField;
