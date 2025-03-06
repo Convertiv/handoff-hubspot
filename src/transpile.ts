@@ -23,6 +23,43 @@ const transpile: (
   return program(parsed);
 };
 
+const buildSearchMeta = (property: PropertyDefinition) => {
+  return `{% set search_page = module.results.use_custom_search_results_template is truthy and module.results.path_id ? content_by_id(module.results.path_id).absolute_url : site_settings.content_search_results_page_path %}
+
+{% unless (search_page is string_containing "//") %}
+  {% set search_page = "/" ~ search_page %}
+{% endunless %}
+
+{% set search_page = search_page|regex_replace("http:", "") %}
+
+{% set content_types = [
+  {
+    field_name: "website_pages",
+    content_type: "SITE_PAGE"
+  },
+  {
+    field_name: "landing_pages",
+    content_type: "LANDING_PAGE"
+  },
+  {
+    field_name: "blog_posts",
+    content_type: "BLOG_POST"
+  },
+  {
+    field_name: "listing_pages",
+    content_type: "LISTING_PAGE"
+  },
+  {
+    field_name: "knowledge_articles",
+    content_type: "KNOWLEDGE_ARTICLE"
+  },
+  {
+    field_name: "case_studies",
+    content_type: "HS_CASE_STUDY"
+  }
+] %}`;
+};
+
 /**
  * Transpile handlebars block to hubspot block
  * @param node
@@ -58,6 +95,7 @@ const block = (node) => {
           }
         }
       }
+
       if (parentProperty) {
         formatValue += ` type="${parentProperty.type}"  #}`;
         if (parentProperty.type === "menu") {
@@ -69,6 +107,9 @@ const block = (node) => {
           let context = `menu_${uuidv4().substring(1, 6)}`;
           formatValue += `\n{% set ${context} = menu(${parentTarget}.${variable}) %}`;
           inMenuContext = context;
+        }
+        if (parentProperty.type === "search") {
+          formatValue += buildSearchMeta(parentProperty);
         }
       }
 
@@ -213,6 +254,8 @@ const mustache = (node) => {
 
   if (value === "this") {
     value = `${iterator[iterator.length - 1]}.${field}`;
+  } else if (value === "search_page") {
+    value = "search_page";
   } else if (value === "@index") {
     value = `loop.index`;
   } else {

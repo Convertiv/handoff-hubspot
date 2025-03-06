@@ -17,6 +17,7 @@ export type FieldType =
   | "video_embed"
   | "pagination"
   | "boolean"
+  | "search"
   | "menu";
 
 export const FieldTypes: FieldType[] = [
@@ -39,6 +40,7 @@ export const FieldTypes: FieldType[] = [
   "pagination",
   "boolean",
   "menu",
+  "search",
 ];
 
 export type ComponentType = "element" | "block";
