@@ -18,7 +18,8 @@ export type FieldType =
   | "pagination"
   | "boolean"
   | "search"
-  | "menu";
+  | "menu"
+  | "icon";
 
 export const FieldTypes: FieldType[] = [
   "text",
@@ -41,6 +42,7 @@ export const FieldTypes: FieldType[] = [
   "boolean",
   "menu",
   "search",
+  "icon",
 ];
 
 export type ComponentType = "element" | "block";
