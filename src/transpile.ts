@@ -1,6 +1,7 @@
 import Handlebars from "handlebars";
 import { PropertyDefinition } from "./fields/types";
 import { v4 as uuidv4 } from "uuid";
+import chalk from "chalk";
 const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
@@ -111,6 +112,9 @@ const block = (node) => {
         if (parentProperty.type === "search") {
           formatValue += buildSearchMeta(parentProperty);
         }
+      } else {
+        console.log(chalk.yellow(`Unknown field type: ${first}`));
+        formatValue += ` type="unknown"  #}`;
       }
 
       returnValue = `${formatValue}\n${program(node.program)}{# end field #}`;
