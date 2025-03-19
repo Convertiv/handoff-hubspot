@@ -125,8 +125,7 @@ const block = (node) => {
       // ask if the variable is a property
       if (findProperty) {
         if (findProperty.type === "link") {
-          variableList[variableList.length - 2] =
-            `${findProperty.id}_${variable}`;
+          variableList[variableList.length - 2] = `${findProperty.id}_url`;
           variableList[variableList.length - 1] = "href";
         } else if (findProperty.type === "video_embed") {
           if (variable === "poster") {
@@ -239,13 +238,17 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   return current;
 };
 
-const findParent = (parts: string[]) => {
+const findParent = (parts: string[], debug?: boolean) => {
   let parent;
   for (let part of parts) {
     if (part === "properties") {
+      parent = properties;
+    } else if (part === "this") {
+      parent = currentProperty;
     } else {
       parent = findPart(part, parent);
     }
+    if (debug) console.log(parent);
   }
   return parent;
 };
