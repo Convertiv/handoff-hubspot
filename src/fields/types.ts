@@ -134,10 +134,12 @@ export interface PropertyDefinition {
   default: ValueDefinition;
   properties?: { [key: string]: PropertyDefinition };
   items?: PropertyDefinition;
-  options?: {
-    value: string;
-    label: string;
-  }[];
+  options?:
+    | {
+        value: string;
+        label: string;
+      }[]
+    | string[];
 }
 
 export interface RulesDefinition {
