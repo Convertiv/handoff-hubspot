@@ -243,6 +243,16 @@ const validateField = (
             property: key,
             severity: "error",
           });
+        } else if (
+          !property.items.properties &&
+          property.items.type === "object"
+        ) {
+          errors.push({
+            message: "Properties are required for object fields",
+            attribute: "items.properties",
+            property: key,
+            severity: "error",
+          });
         } else if (property.items.type === "text") {
           // validate text fields
         } else {
