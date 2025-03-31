@@ -39,6 +39,11 @@ const fetchSharedStyles: () => Promise<void> = async () => {
   const request = await init();
   try {
     const response = await request.get("component/shared.css");
+    // check the response code
+    if (response.status !== 200) {
+      console.error("Shared js not found");
+      return;
+    }
     writeSharedCss(response.data, `uds.css`);
   } catch (e) {
     console.error(e);
@@ -57,6 +62,11 @@ const fetchSharedScripts: () => Promise<void> = async () => {
       return;
     }
     const response = await request.get("component/main.js");
+    // check the response code
+    if (response.status !== 200) {
+      console.error("Shared js not found");
+      return;
+    }
     writeSharedJs(response.data, `uds.js`);
   } catch (e) {
     console.error(e);
