@@ -49,6 +49,7 @@ const fetchSharedStyles: () => Promise<void> = async () => {
     console.error(e);
   }
 };
+
 /**
  * Fetch shared styles from handoff api
  */
@@ -106,6 +107,10 @@ export const fetchComponentList: () => Promise<HandoffComponentListResponse> =
     try {
       const request = await init();
       const response = await request.get(`components.json`);
+      if (response.status !== 200) {
+        console.error("Shared js not found");
+        return;
+      }
       // Parse response and create a web component from response
       return response.data;
     } catch (e) {
