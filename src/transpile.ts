@@ -1,7 +1,8 @@
 import Handlebars from "handlebars";
 import { PropertyDefinition } from "./fields/types";
 import { v4 as uuidv4 } from "uuid";
-// Iterator holds the chain of each statements, as we go deeper into the tree
+import chalk from "chalk";
+// Iterator holds the chain of each statements, as we go deeper into the tre
 const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
@@ -132,6 +133,9 @@ const block = (node) => {
         if (parentProperty.type === "search") {
           formatValue += buildSearchMeta(parentProperty);
         }
+      } else {
+        console.log(chalk.yellow(`Unknown field type: ${first}`));
+        formatValue += ` type="unknown"  #}`;
       }
 
       returnValue = `${formatValue}\n${program(node.program)}{# end field #}`;
@@ -142,8 +146,7 @@ const block = (node) => {
       // ask if the variable is a property
       if (findProperty) {
         if (findProperty.type === "link") {
-          variableList[variableList.length - 2] =
-            `${findProperty.id}_${variable}`;
+          variableList[variableList.length - 2] = `${findProperty.id}_url`;
           variableList[variableList.length - 1] = "href";
         } else if (findProperty.type === "video_embed") {
           if (variable === "poster") {
@@ -257,13 +260,17 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
   return current;
 };
 
-const findParent = (parts: string[]) => {
+const findParent = (parts: string[], debug?: boolean) => {
   let parent;
   for (let part of parts) {
     if (part === "properties") {
+      parent = properties;
+    } else if (part === "this") {
+      parent = currentProperty;
     } else {
       parent = findPart(part, parent);
     }
+    if (debug) console.log(parent);
   }
   return parent;
 };
