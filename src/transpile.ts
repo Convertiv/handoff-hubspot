@@ -1,6 +1,7 @@
 import Handlebars from "handlebars";
 import { PropertyDefinition } from "./fields/types";
 import { v4 as uuidv4 } from "uuid";
+// Iterator holds the chain of each statements, as we go deeper into the tree
 const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
@@ -60,6 +61,39 @@ const buildSearchMeta = (property: PropertyDefinition) => {
 ] %}`;
 };
 
+const searchForField = (variableList: string[]) => {
+  let searchSpace: {
+      [key: string]: PropertyDefinition;
+  } | PropertyDefinition = properties,
+  foundProperty: PropertyDefinition | undefined;
+  // Check if the variable is a property
+  // Find the property in the properties object
+  for (let i = 0; i < variableList.length; i++) {
+    let part = variableList[i];
+  
+    if (part === "properties") {
+      searchSpace = properties;
+      continue;
+    }
+    if (part === "this") {
+      searchSpace = chain[chain.length - 1];
+      continue;
+    }
+    if (searchSpace) {
+      if( searchSpace[part]) {
+        searchSpace = searchSpace[part];
+      }  else if (searchSpace.type === "array") {
+        searchSpace = searchSpace.items.properties[part];
+      } else if (searchSpace.type === "object") {
+        searchSpace = searchSpace.properties[part];
+      } else {
+        searchSpace = searchSpace;
+      }
+    }
+  }
+  foundProperty = searchSpace as PropertyDefinition;
+  return foundProperty;
+}
 /**
  * Transpile handlebars block to hubspot block
  * @param node
@@ -81,20 +115,7 @@ const block = (node) => {
       // get the parent
       let first = variableList[0];
 
-      let parentProperty = properties[first];
-      if (variableList.length > 1) {
-        // iterate starting from the second item in the list
-        for (let i = 1; i < variableList.length; i++) {
-          let part = variableList[i];
-          if (parentProperty) {
-            if (parentProperty.type === "array") {
-              parentProperty = parentProperty.items.properties[part];
-            } else if (parentProperty.type === "object") {
-              parentProperty = parentProperty.properties[part];
-            }
-          }
-        }
-      }
+      let parentProperty = searchForField(variableList);
 
       if (parentProperty) {
         formatValue += ` type="${parentProperty.type}"  #}`;
@@ -164,12 +185,13 @@ const block = (node) => {
       }
       break;
     case "each":
-      // check if the variable is a property
-      if (properties[variable]) {
-        currentProperty = properties[variable];
+      let searchSpace = searchForField(variableList);
+      if (searchSpace) {
+        currentProperty = searchSpace;
         chain.push(currentProperty);
         field = variable;
       }
+      // check if the variable is a property
       const current = variable[0];
       let loop_target = "module";
       if (iterator.length > 0) {
@@ -250,8 +272,13 @@ const mustache = (node) => {
   // check if the value is a variable or a string
   // @ts-ignore
   let value = node.path.original,
-    lookup;
-
+    property: PropertyDefinition | undefined = undefined,
+    parentProperty: PropertyDefinition | undefined = undefined,
+    searchSpace: {
+      [key: string]: PropertyDefinition;
+    } | PropertyDefinition = properties;
+    
+  
   if (value === "this") {
     value = `${iterator[iterator.length - 1]}.${field}`;
   } else if (value === "search_page") {
@@ -263,27 +290,39 @@ const mustache = (node) => {
       value = value.replace("../properties.", "properties.");
     }
     const valueParts = value.split(".");
-    const parentLookup = findParent(valueParts);
     for (let part of valueParts) {
-      lookup = findPart(part, parentProperty);
-      if (lookup) {
-        parentProperty = lookup;
-        // @ts-ignore
-        field = parentProperty.id;
-      }
+      
       // the field name can not be = label
       if (part === "this") {
         // We're in a loop, so current prop is already set to the thing we're looping over
         value = iterator[iterator.length - 1]; // get the last item in the iterator
-        parentProperty = currentProperty;
+        searchSpace = chain[chain.length - 1];
       } else if (part === "properties") {
         value = "module";
+        searchSpace = properties;
       } else {
+        parentProperty = searchSpace as PropertyDefinition;
+        if (searchSpace) {
+          if (searchSpace[part]) {
+            searchSpace = searchSpace[part];
+          } else if (searchSpace.type === "array") {
+            searchSpace = searchSpace.items.properties[part];
+          } else if (searchSpace.type === "object") {
+            searchSpace = searchSpace.properties[part];
+          } else {
+            searchSpace = searchSpace;
+          }
+        }
+        property = searchSpace as PropertyDefinition;
         if (value === "metadata") {
           // This is a special case where we're looking for a property on the metadata object
           value = metadata(part);
         } else {
-          if (!parentProperty) {
+
+          if (parentProperty) {
+            field = part;
+          }
+          if (!property) {
             value += `.${part}`;
           } else if (
             parentProperty.type === "link" ||
@@ -291,14 +330,14 @@ const mustache = (node) => {
             parentProperty.type === "breadcrumb"
           ) {
             if (part === "label" || part === "text") {
-              value += `.${field}_text`;
+              value += `_text`;
             } else if (part === "href" || part === "url") {
-              value += `.${field}_url.href|escape_attr`;
+              value += `_url.href|escape_attr`;
             } else if (part === "rel") {
-              value += `.${field}.rel|escape_attr`;
+              value += `.rel|escape_attr`;
             }
-          } else if (parentProperty.type === "url") {
-            value += `.${field}.href|escape_attr`;
+          } else if (property.type === "url") {
+            value += `.href|escape_attr`;
           } else if (parentProperty.type === "video_embed") {
             if (part === "poster") {
               value += `_poster`;
@@ -312,7 +351,7 @@ const mustache = (node) => {
         }
       }
     }
-    parentProperty = null;
+    property = null;
   }
 
   return `{{ ${value} }}`;
