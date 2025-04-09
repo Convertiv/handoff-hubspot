@@ -218,10 +218,11 @@ const block = (node) => {
         returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
       }
       if (currentProperty) {
-        chain.pop();
+        
         currentProperty = chain[chain.length - 1];
         field = undefined;
       }
+      chain.pop();
       iterator.pop();
       break;
   }
