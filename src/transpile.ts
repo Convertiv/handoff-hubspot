@@ -7,7 +7,6 @@ const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
 let currentProperty: PropertyDefinition | null = null;
-let parentProperty: PropertyDefinition | null = null;
 let field;
 let inMenuContext;
 
@@ -20,6 +19,12 @@ const transpile: (
   code: string,
   props?: { [key: string]: PropertyDefinition }
 ) => string = (code, props) => {
+  // reset the iterator and chain
+  iterator.length = 0;
+  chain.length = 0;
+  currentProperty = null;
+  inMenuContext = undefined;
+  field = undefined;
   const parsed = Handlebars.parse(code);
   if (props) properties = props;
   return program(parsed);
@@ -218,10 +223,11 @@ const block = (node) => {
         returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
       }
       if (currentProperty) {
-        chain.pop();
         currentProperty = chain[chain.length - 1];
         field = undefined;
       }
+      
+      chain.pop();
       iterator.pop();
       break;
   }
