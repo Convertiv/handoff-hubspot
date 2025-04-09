@@ -63,15 +63,17 @@ const buildSearchMeta = (property: PropertyDefinition) => {
 };
 
 const searchForField = (variableList: string[]) => {
-  let searchSpace: {
-      [key: string]: PropertyDefinition;
-  } | PropertyDefinition = properties,
-  foundProperty: PropertyDefinition | undefined;
+  let searchSpace:
+      | {
+          [key: string]: PropertyDefinition;
+        }
+      | PropertyDefinition = properties,
+    foundProperty: PropertyDefinition | undefined;
   // Check if the variable is a property
   // Find the property in the properties object
   for (let i = 0; i < variableList.length; i++) {
     let part = variableList[i];
-  
+
     if (part === "properties") {
       searchSpace = properties;
       continue;
@@ -81,9 +83,9 @@ const searchForField = (variableList: string[]) => {
       continue;
     }
     if (searchSpace) {
-      if( searchSpace[part]) {
+      if (searchSpace[part]) {
         searchSpace = searchSpace[part];
-      }  else if (searchSpace.type === "array") {
+      } else if (searchSpace.type === "array") {
         searchSpace = searchSpace.items.properties[part];
       } else if (searchSpace.type === "object") {
         searchSpace = searchSpace.properties[part];
@@ -94,7 +96,7 @@ const searchForField = (variableList: string[]) => {
   }
   foundProperty = searchSpace as PropertyDefinition;
   return foundProperty;
-}
+};
 /**
  * Transpile handlebars block to hubspot block
  * @param node
@@ -167,6 +169,8 @@ const block = (node) => {
             variableList[variableList.length - 1] = `${findProperty.id}_url`;
             variableList.push("href");
           }
+        } else if (findProperty.type === "url") {
+          variableList[variableList.length - 1] = `${findProperty.id}.href`;
         }
       }
       if (iterator.length > 0) {
@@ -281,11 +285,12 @@ const mustache = (node) => {
   let value = node.path.original,
     property: PropertyDefinition | undefined = undefined,
     parentProperty: PropertyDefinition | undefined = undefined,
-    searchSpace: {
-      [key: string]: PropertyDefinition;
-    } | PropertyDefinition = properties;
-    
-  
+    searchSpace:
+      | {
+          [key: string]: PropertyDefinition;
+        }
+      | PropertyDefinition = properties;
+
   if (value === "this") {
     value = `${iterator[iterator.length - 1]}.${field}`;
   } else if (value === "search_page") {
@@ -298,7 +303,6 @@ const mustache = (node) => {
     }
     const valueParts = value.split(".");
     for (let part of valueParts) {
-      
       // the field name can not be = label
       if (part === "this") {
         // We're in a loop, so current prop is already set to the thing we're looping over
@@ -325,7 +329,6 @@ const mustache = (node) => {
           // This is a special case where we're looking for a property on the metadata object
           value = metadata(part);
         } else {
-
           if (parentProperty) {
             field = part;
           }
@@ -344,7 +347,7 @@ const mustache = (node) => {
               value += `.rel|escape_attr`;
             }
           } else if (property.type === "url") {
-            value += `.href|escape_attr`;
+            value += `.${part}.href|escape_attr`;
           } else if (parentProperty.type === "video_embed") {
             if (part === "poster") {
               value += `_poster`;
