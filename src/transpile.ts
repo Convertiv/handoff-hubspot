@@ -185,7 +185,11 @@ const block = (node) => {
         }
       }
       if (iterator.length > 0) {
-        target = iterator[iterator.length - 1];
+        if (variableList[0] === "properties") {
+          target = "module";
+        } else {
+          target = iterator[iterator.length - 1];
+        }
         // if (field) {
         //   target += `.${field}`;
         // }
