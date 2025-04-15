@@ -108,7 +108,13 @@ const searchForField = (variableList: string[]) => {
  * @returns
  */
 const block = (node) => {
-  const variableList: string[] = node.params[0].original.split(".");
+  let value = node.params[0].original;
+  // If we're looking up to the top of the tree, we need to replace the ../properties. with properties.
+  // TODO: handle recursion for this
+  if (value.includes("../properties.")) {
+    value = value.replace("../properties.", "properties.");
+  }
+  const variableList: string[] = value.split(".");
 
   let variable = variableList[variableList.length - 1];
   let returnValue;
@@ -226,7 +232,7 @@ const block = (node) => {
         currentProperty = chain[chain.length - 1];
         field = undefined;
       }
-      
+
       chain.pop();
       iterator.pop();
       break;
