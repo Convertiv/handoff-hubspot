@@ -368,6 +368,8 @@ const mustache = (node) => {
             if (part === "poster") {
               value += `_poster`;
             } else if (part === "url") {
+            } else if (part === "title") {
+              value += `_title`;
             } else {
               value += `.${part}`;
             }

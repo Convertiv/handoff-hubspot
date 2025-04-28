@@ -15,6 +15,18 @@ export const buildVideoFileField = (
   return build;
 };
 
+export const buildVideoTitleField = (
+  id: string,
+  property: PropertyDefinition
+) => {
+  const build = buildPlainTextField(id, property);
+  build["name"] = `${id}_title`;
+  build["label"] = build["label"] + " Title";
+  build["help_text"] = "Title of the video for accessibility";
+
+  return build;
+};
+
 export const buildVideoPosterField = (
   id: string,
   property: PropertyDefinition

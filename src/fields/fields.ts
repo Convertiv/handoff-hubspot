@@ -14,6 +14,7 @@ import buildUrlField from "./url";
 import buildVideoFileField, {
   buildVideoEmbedField,
   buildVideoPosterField,
+  buildVideoTitleField,
 } from "./video";
 
 /**
@@ -60,9 +61,11 @@ export const buildFields = (properties: any) => {
         break;
       case "video_file":
         fields.push(buildVideoFileField(key, property));
+        fields.push(buildVideoTitleField(key, property));
         break;
       case "video_embed":
         fields.push(buildVideoEmbedField(key, property));
+        fields.push(buildVideoTitleField(key, property));
         fields.push(buildVideoPosterField(key, property));
         break;
       case "menu":
