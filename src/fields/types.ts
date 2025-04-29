@@ -82,7 +82,8 @@ export type ValueDefinition =
   | ImageValue
   | ButtonValue
   | BreadCrumbValue[]
-  | LinkValue;
+  | LinkValue
+  | VideoValue;
 
 export interface ImageValue {
   src: string;
@@ -96,6 +97,7 @@ export interface ImageValue {
 
 export interface VideoValue {
   src: string;
+  title: string;
   poster: {
     src: string;
     alt: string;

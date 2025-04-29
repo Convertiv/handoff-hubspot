@@ -23,6 +23,11 @@ export const buildVideoTitleField = (
   build["name"] = `${id}_title`;
   build["label"] = build["label"] + " Title";
   build["help_text"] = "Title of the video for accessibility";
+  let defaultValue = "An embedded video";
+  if (typeof property.default === "object" && "title" in property.default)
+    defaultValue = property.default.title || "";
+  if (typeof property.default === "string") defaultValue = property.default;
+  build["default"] = defaultValue;
 
   return build;
 };
