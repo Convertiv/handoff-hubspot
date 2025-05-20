@@ -1,6 +1,6 @@
 {
   "name": "handoff-hubspot",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "description": "A simple CLI toolchain for fetching handoff components and transpiling them into hubspot modules",
   "main": "index.js",
   "bin": {
