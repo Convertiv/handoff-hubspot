@@ -491,23 +491,29 @@ const validateComponent = async (id: string) => {
 
 export const validateAll = async () => {
   const data = await fetchComponentList();
-  data.map(async (component) => {
+  let errorCount = 0;
+  for (let component of data) {
     // validate the component
+    console.log(chalk.blue(`\nValidating ${component.id} (${component.title})`));
     const full = await fetchComponent(component.id);
     const latest = full;
-    const errors = validateModule(latest);
+    const errors = await validateModule(latest);
     if (errors.length > 0) {
       console.error(
         chalk.red(
-          `\nValidation failed for ${component.id} (${component.title})`
+          `Validation failed for ${component.id} (${component.title})`
         )
       );
       console.log(formatErrors(errors));
-      throw new Error("Validation failed");
+      errorCount++;
     } else {
-      console.log(chalk.green(`\nValidation passed for (${component.title})`));
+      console.log(chalk.green(`Validation passed for (${component.title})`));
     }
-  });
+  }
+  if (errorCount > 0) {
+    console.error(chalk.red(`\nValidation failed for ${errorCount} components`));
+    throw new Error(`Validation failed for ${errorCount} components`);
+  }
   return true;
 };
 
