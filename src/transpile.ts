@@ -102,13 +102,53 @@ const searchForField = (variableList: string[]) => {
   foundProperty = searchSpace as PropertyDefinition;
   return foundProperty;
 };
+
+const expression = (node) => {
+  // Get the path expression
+  let path = node.path.original;
+  switch (path) {
+    case "eq":
+      let statement = `${translateExpression(node.params[0])} == ${translateExpression(node.params[1])}`;
+      return statement;
+    default:
+      return path;
+  }
+};
+
+const translateExpression = (param) => {
+  if (param.type === "PathExpression") {
+    param = param.original;
+    param = param.replace("properties.", "module.");
+    return param;
+  } else if (param.type === "StringLiteral") {
+    return `'${param.original}'`;
+  }
+};
+
 /**
  * Transpile handlebars block to hubspot block
  * @param node
  * @returns
  */
 const block = (node) => {
-  let value = node.params[0].original;
+  // Hoping this is a simple statement
+  if (!node.params || node.params.length === 0) {
+    console.log("Warning - there is a parameter with no value");
+    return "";
+  }
+  // We know there is a parameter, lets get the first one
+  let param = node.params[0];
+  let value = "", expressionValue = "",
+    isExpression = false;
+  if (!param.original && param.type === "SubExpression") {
+    // this is an expression, we need to evaluate it
+    value = expression(param);
+    expressionValue = value;
+    isExpression = true;
+  } else {
+    value = param.original;
+  }
+
   // If we're looking up to the top of the tree, we need to replace the ../properties. with properties.
   // TODO: handle recursion for this
   if (value.includes("../properties.")) {
@@ -200,10 +240,15 @@ const block = (node) => {
         .join(".");
 
       // check to see if the block has an else block
+      let statement = `${target}.${variable}`;
+      if(isExpression) {
+        statement = value;
+      }
+      returnValue = `{% if ${statement} %} ${program(node.program)}`;
       if (node.inverse) {
-        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% else %} ${program(node.inverse)} {% endif %}`;
+        returnValue += `{% else %} ${program(node.inverse)} {% endif %}`;
       } else {
-        returnValue = `{% if ${target}.${variable} %} ${program(node.program)} {% endif %}`;
+        returnValue += ` {% endif %}`;
       }
       break;
     case "each":
