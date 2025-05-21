@@ -122,6 +122,8 @@ const translateExpression = (param) => {
     return param;
   } else if (param.type === "StringLiteral") {
     return `'${param.original}'`;
+  } else if (param.type === "NumberLiteral") {
+    return param.original;
   }
 };
 
