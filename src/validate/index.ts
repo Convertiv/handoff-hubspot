@@ -280,6 +280,19 @@ const validateField = (
       }
     }
 
+    if (property.type === "select") {
+      if (!property.options) {
+        errors.push({
+          message: "Options are required for select fields",
+          attribute: "options",
+          property: key,
+          severity: "error",
+        });
+      }
+    }
+    
+    
+
     if (property.type === "link") {
       if (!property.default || typeof property.default !== "object") {
         errors.push({
