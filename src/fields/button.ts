@@ -51,6 +51,9 @@ export const buildButtonLabelField = (
     build["validation_message"] = property.rules.pattern;
   }
   let defaultText = "";
+  if (typeof property.default === "object" && "text" in property.default) {
+    defaultText = property.default?.text;
+  }
   if (typeof property.default === "object" && "label" in property.default) {
     defaultText = property.default?.label;
   }

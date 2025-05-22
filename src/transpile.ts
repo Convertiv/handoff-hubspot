@@ -119,7 +119,7 @@ const translateExpression = (param) => {
   if (param.type === "PathExpression") {
     param = param.original;
     param = param.replace("properties.", "module.");
-    if(param === '@index') {
+    if (param === "@index") {
       return `loop.index`;
     }
     return param;
@@ -143,7 +143,8 @@ const block = (node) => {
   }
   // We know there is a parameter, lets get the first one
   let param = node.params[0];
-  let value = "", expressionValue = "",
+  let value = "",
+    expressionValue = "",
     isExpression = false;
   if (!param.original && param.type === "SubExpression") {
     // this is an expression, we need to evaluate it
@@ -199,6 +200,7 @@ const block = (node) => {
       returnValue = `${formatValue}\n${program(node.program)}{# end field #}`;
       break;
     case "if":
+      console.log(variableList);
       let target = "module";
       let findProperty = findParent(variableList);
       // ask if the variable is a property
@@ -229,25 +231,42 @@ const block = (node) => {
           variableList[variableList.length - 1] = `${findProperty.id}.href`;
         }
       }
-      if (iterator.length > 0) {
-        if (variableList[0] === "properties") {
-          target = "module";
-        } else {
-          target = iterator[iterator.length - 1];
+
+      if (
+        variableList[0] === "@first" ||
+        variableList[0] === "@last" ||
+        variableList[0] === "@index" ||
+        variableList[0] === "@length"
+      ) {
+        variable = variableList[0];
+      } else {
+        variable = variableList
+          .slice(1)
+          .filter((variable) => variable !== null)
+          .join(".");
+        if (iterator.length > 0) {
+          if (variableList[0] === "properties") {
+            target = "module";
+          } else {
+            target = iterator[iterator.length - 1];
+          }
         }
-        // if (field) {
-        //   target += `.${field}`;
-        // }
       }
-      variable = variableList
-        .slice(1)
-        .filter((variable) => variable !== null)
-        .join(".");
 
       // check to see if the block has an else block
       let statement = `${target}.${variable}`;
-      if(isExpression) {
+      if (isExpression) {
         statement = value;
+      }
+
+      if (variable === "@first") {
+        statement = "loop.first";
+      } else if (variable === "@last") {
+        statement = "loop.last";
+      } else if (variable === "@index") {
+        statement = "loop.index";
+      } else if (variable === "@length") {
+        statement = "loop.length";
       }
       returnValue = `{% if ${statement} %} ${program(node.program)}`;
       if (node.inverse) {

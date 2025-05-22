@@ -1,6 +1,30 @@
 import fs from "fs";
 import prompts from "prompts";
-const defaultConfig = {
+export interface AppConfig {
+  version: string;
+  url: string;
+  cssPath: string;
+  jsPath: string;
+  moduleJS: boolean;
+  modulesPath: string;
+  modulePrefix: string;
+  username: string;
+  password: string;
+  fields: {
+    [key: string]: {
+      properties: {
+        [key: string]: {
+          id: string;
+          type: string;
+          label: string;
+          description: string;
+        };
+      };
+    };
+  };
+}
+
+const defaultConfig: AppConfig = {
   version: "0.0.1",
   url: "https://stage-ssc.handoff.com/api/",
   cssPath: "css/uds.css",
@@ -10,6 +34,56 @@ const defaultConfig = {
   modulePrefix: "UDS: ",
   username: "",
   password: "",
+  fields: {
+    image: {
+      properties: {
+        src: {
+          id: "src",
+          type: "string",
+          label: "Source",
+          description: "The source of the image",
+        },
+        alt: {
+          id: "alt",
+          type: "string",
+          label: "Alt",
+          description: "The alt text of the image",
+        },
+      },
+    },
+    button: {
+      properties: {
+        label: {
+          id: "label",
+          type: "string",
+          label: "Label",
+          description: "The label of the button",
+        },
+        url: {
+          id: "url",
+          type: "string",
+          label: "URL",
+          description: "The URL of the button",
+        },
+      },
+    },
+    link: {
+      properties: {
+        text: {
+          id: "text",
+          type: "string",
+          label: "Text",
+          description: "The text of the link",
+        },
+        href: {
+          id: "href",
+          type: "string",
+          label: "URL",
+          description: "The URL of the link",
+        },
+      },
+    },
+  },
 };
 
 export const createConfigCommand = async () => {
