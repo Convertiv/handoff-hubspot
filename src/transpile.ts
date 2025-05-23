@@ -200,7 +200,6 @@ const block = (node) => {
       returnValue = `${formatValue}\n${program(node.program)}{# end field #}`;
       break;
     case "if":
-      console.log(variableList);
       let target = "module";
       let findProperty = findParent(variableList);
       // ask if the variable is a property
