@@ -176,7 +176,7 @@ const buildModule = async (componentId: string, force: boolean) => {
   writeToModuleFile(pretty, componentId, `module.html`);
   let css;
   if (!config.moduleCSS) {
-    css = "";
+    css = "/**\n * We are using the core compiled css. This file is blank \n */";
   } else {
     css = component.css;
   }
