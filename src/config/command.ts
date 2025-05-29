@@ -27,7 +27,7 @@ export interface AppConfig {
 
 const defaultConfig: AppConfig = {
   version: "0.0.1",
-  url: "https://stage-ssc.handoff.com/api/",
+  url: "https://localhost:3000/api/",
   cssPath: "css/uds.css",
   jsPath: "js/uds.js",
   moduleJS: false,
@@ -197,8 +197,9 @@ export const createConfigCommand = async () => {
  */
 export const readConfig = () => {
   if (fs.existsSync("handoff.config.json")) {
-    const config = fs.readFileSync("handoff.config.json", "utf-8");
-    return JSON.parse(config);
+    const customConfig = fs.readFileSync("handoff.config.json", "utf-8");
+    const config = { ...defaultConfig, ...JSON.parse(customConfig) };
+    return config;
   }
   return defaultConfig;
 };

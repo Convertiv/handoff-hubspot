@@ -175,7 +175,7 @@ const buildModule = async (componentId: string, force: boolean) => {
     pretty;
   writeToModuleFile(pretty, componentId, `module.html`);
   let css;
-  if (!config.moduleCss) {
+  if (!config.moduleCSS) {
     css = "";
   } else {
     css = component.css;
