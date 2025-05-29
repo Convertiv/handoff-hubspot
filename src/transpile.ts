@@ -119,6 +119,7 @@ const translateExpression = (param) => {
   if (param.type === "PathExpression") {
     param = param.original;
     param = param.replace("properties.", "module.");
+    param = param.replace("this.", `${iterator[iterator.length - 1]}.`);
     if (param === "@index") {
       return `loop.index`;
     }
