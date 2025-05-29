@@ -174,12 +174,13 @@ const buildModule = async (componentId: string, force: boolean) => {
     "\n\n" +
     pretty;
   writeToModuleFile(pretty, componentId, `module.html`);
-  // writeToModuleFile(
-  //   JSON.stringify(header, null, 2),
-  //   componentId,
-  //   `handoff.json`
-  // );
-  writeToModuleFile(component.css, componentId, `module.css`);
+  let css;
+  if (!config.moduleCss) {
+    css = "";
+  } else {
+    css = component.css;
+  }
+  writeToModuleFile(css, componentId, `module.css`);
 
   let js;
   if (!config.moduleJS) {

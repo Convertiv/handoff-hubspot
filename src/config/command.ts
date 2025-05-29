@@ -6,6 +6,7 @@ export interface AppConfig {
   cssPath: string;
   jsPath: string;
   moduleJS: boolean;
+  moduleCSS: boolean;
   modulesPath: string;
   modulePrefix: string;
   username: string;
@@ -30,6 +31,7 @@ const defaultConfig: AppConfig = {
   cssPath: "css/uds.css",
   jsPath: "js/uds.js",
   moduleJS: false,
+  moduleCSS: true,
   modulesPath: "modules",
   modulePrefix: "UDS: ",
   username: "",
@@ -125,6 +127,13 @@ export const createConfigCommand = async () => {
     message:
       "Should we pull js for individual modules, or use the centrally packaged js?",
     initial: defaultConfig.moduleJS,
+  });
+  const moduleCSS = await prompts({
+    type: "confirm",
+    name: "value",
+    message:
+      "Should we pull css for individual modules, or use the centrally packaged css?",
+    initial: defaultConfig.moduleCSS,
   });
   // Ask for the modules path
   const modulesPath = await prompts({
