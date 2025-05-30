@@ -108,6 +108,12 @@ const expression = (node) => {
   let path = node.path.original;
   switch (path) {
     case "eq":
+      // lets check to see if the first param is a loop index, and adjust the second param accordingly
+      
+      if (node.params[0].type === "PathExpression" && node.params[0].original === "@index" && node.params[1].type === "NumberLiteral") {
+        // Hubspot indexes start at 1, so we need to adjust the second param accordingly
+        node.params[1].original = Number(node.params[1].original) + 1;
+      }
       let statement = `${translateExpression(node.params[0])} == ${translateExpression(node.params[1])}`;
       return statement;
     default:
