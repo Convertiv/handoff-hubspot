@@ -38,10 +38,10 @@ const init = async () => {
 const fetchSharedStyles: () => Promise<void> = async () => {
   const request = await init();
   try {
-    const response = await request.get("component/shared.css");
+    const response = await request.get("component/main.css");
     // check the response code
     if (response.status !== 200) {
-      console.error("Shared js not found");
+      console.error("Main css not found");
       return;
     }
     writeSharedCss(response.data, `uds.css`);
