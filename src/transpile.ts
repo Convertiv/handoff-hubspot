@@ -442,6 +442,8 @@ const mustache = (node) => {
             } else {
               value += `.${part}`;
             }
+          } else if (parentProperty.type === "menu") {
+            value += `.${part}`;
           } else {
             if (part === "label") {
               value += `.field_label`;
