@@ -443,7 +443,11 @@ const mustache = (node) => {
               value += `.${part}`;
             }
           } else {
-            value += `.${part}`;
+            if (part === "label") {
+              value += `.field_label`;
+            } else {
+              value += `.${part}`;
+            }
           }
         }
       }
