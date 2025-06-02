@@ -27,57 +27,56 @@ export const buildFields = (properties: any, parentId?: string) => {
   const fields = [];
   Object.keys(properties).map((key: string) => {
     const property = properties[key];
-    const fieldId = parentId ? `${parentId}_${key}` : key;
     switch (property.type) {
       case "boolean":
-        fields.push(buildBooleanField(fieldId, property));
+        fields.push(buildBooleanField(key, property, parentId));
         break;
       case "array":
-        fields.push(buildBaseGroupField(fieldId, property));
+        fields.push(buildBaseGroupField(key, property, parentId));
         break;
       case "object":
-        fields.push(buildObjectGroupField(fieldId, property));
+        fields.push(buildObjectGroupField(key, property, parentId));
         break;
       case "text":
-        fields.push(buildPlainTextField(fieldId, property));
+        fields.push(buildPlainTextField(key, property, parentId));
         break;
       case "select":
-        fields.push(buildSelectField(fieldId, property));
+        fields.push(buildSelectField(key, property, parentId));
         break;
       case "richtext":
-        fields.push(buildRichTextField(fieldId, property));
+        fields.push(buildRichTextField(key, property, parentId));
         break;
       case "image":
-        fields.push(buildImageField(fieldId, property));
+        fields.push(buildImageField(key, property, parentId));
         break;
       case "link":
-        fields.push(buildButtonField(fieldId, property));
-        fields.push(buildLinkTextField(fieldId, property));
+        fields.push(buildButtonField(key, property, parentId));
+        fields.push(buildLinkTextField(key, property, parentId));
         break;
       case "icon":
-        fields.push(buildIconField(fieldId, property));
+        fields.push(buildIconField(key, property, parentId));
         break;
       case "button":
-        fields.push(buildButtonField(fieldId, property));
-        fields.push(buildButtonLabelField(fieldId, property));
+        fields.push(buildButtonField(key, property, parentId));
+        fields.push(buildButtonLabelField(key, property, parentId));
         break;
       case "video_file":
-        fields.push(buildVideoFileField(fieldId, property));
-        fields.push(buildVideoTitleField(fieldId, property));
+        fields.push(buildVideoFileField(key, property, parentId));
+        fields.push(buildVideoTitleField(key, property, parentId));
         break;
       case "video_embed":
-        fields.push(buildVideoEmbedField(fieldId, property));
-        fields.push(buildVideoTitleField(fieldId, property));
-        fields.push(buildVideoPosterField(fieldId, property));
+        fields.push(buildVideoEmbedField(key, property, parentId));
+        fields.push(buildVideoTitleField(key, property, parentId));
+        fields.push(buildVideoPosterField(key, property, parentId));
         break;
       case "menu":
-        fields.push(buildMenuField(fieldId, property));
+        fields.push(buildMenuField(key, property, parentId));
         break;
       case "url":
-        fields.push(buildUrlField(fieldId, property));
+        fields.push(buildUrlField(key, property, parentId));
         break;
       case "number":
-        fields.push(buildNumberField(fieldId, property));
+        fields.push(buildNumberField(key, property, parentId));
         break;
     }
   });

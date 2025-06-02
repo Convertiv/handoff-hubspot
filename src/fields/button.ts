@@ -1,8 +1,8 @@
 import { buildBaseField } from "./generic";
 import { PropertyDefinition } from "./types";
 
-const buildButtonUrlField = (id: string, property: PropertyDefinition) => {
-  const build = buildBaseField(id, property);
+const buildButtonUrlField = (id: string, property: PropertyDefinition, parentId?: string) => {
+  const build = buildBaseField(id, property, parentId);
   build["id"] = `${id}_url`;
   build["name"] = `${id}_url`;
   build["type"] = "url";
@@ -43,9 +43,10 @@ const buildButtonUrlField = (id: string, property: PropertyDefinition) => {
 
 export const buildButtonLabelField = (
   id: string,
-  property: PropertyDefinition 
+  property: PropertyDefinition,
+  parentId?: string
 ) => {
-  const build = buildBaseField(id, property);
+  const build = buildBaseField(id, property, parentId);
   build["id"] = `${id}_text`;
   build["name"] = `${id}_text`;
   build["label"] = build["label"] + " Label";

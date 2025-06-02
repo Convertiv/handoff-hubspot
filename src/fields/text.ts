@@ -1,8 +1,8 @@
 import { buildBaseField } from "./generic";
 import { PropertyDefinition } from "./types";
 
-const buildPlainTextField = (id: string, property: PropertyDefinition) => {
-  const build = buildBaseField(id, property);
+const buildPlainTextField = (id: string, property: PropertyDefinition, parentId?: string) => {
+  const build = buildBaseField(id, property, parentId);
   if (property.rules) {
     if (property.rules.pattern) {
       build["validation_message"] = property.rules.pattern;
@@ -13,9 +13,10 @@ const buildPlainTextField = (id: string, property: PropertyDefinition) => {
 
 export const buildRichTextField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  parentId?: string
 ) => {
-  const build = buildBaseField(id, property);
+  const build = buildBaseField(id, property, parentId);
   build["type"] = "richtext";
   if (property.rules) {
     if (property.rules.pattern) {
@@ -25,8 +26,8 @@ export const buildRichTextField = (
   return build;
 };
 
-export const buildNumberField = (id: string, property: PropertyDefinition) => {
-  const build = buildBaseField(id, property);
+export const buildNumberField = (id: string, property: PropertyDefinition, parentId?: string) => {
+  const build = buildBaseField(id, property, parentId);
   build["type"] = "number";
   build["min"] = property.rules.content.min;
   build["max"] = property.rules.content.max;
@@ -49,9 +50,10 @@ export const buildNumberField = (id: string, property: PropertyDefinition) => {
 
 export const buildLinkTextField = (
   id: string,
-  property: PropertyDefinition 
+  
+  property: PropertyDefinition, parentId?: string,
 ) => {
-  const build = buildBaseField(id, property);
+  const build = buildBaseField(id, property, parentId);
   build["id"] = `${id}_text`;
   build["name"] = `${id}_text`;
   build["label"] = build["label"] + " Text";

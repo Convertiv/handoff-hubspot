@@ -6,6 +6,7 @@ import { buildFields } from "./fields";
 export const buildBooleanField = (
     id: string,
     property: PropertyDefinition,
+    parentId?: string
 ): {
     id: string;
     name: string;
@@ -20,7 +21,7 @@ export const buildBooleanField = (
     default: any;
     } => {
     const group = {
-        id: `${id}`,
+        id: `${parentId ? `${parentId}_` : ""}${id}`,
         name: safeLabel(id),
         label: safeName(property.name),
         required: parseRequired(property.rules),

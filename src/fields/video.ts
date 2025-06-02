@@ -6,9 +6,10 @@ import buildUrlField from "./url";
 
 export const buildVideoFileField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  parentId?: string
 ) => {
-  const build = buildBaseField(id, property);
+  const build = buildBaseField(id, property, parentId);
   build["type"] = "file";
   build["display_width"] = null;
 
@@ -17,9 +18,10 @@ export const buildVideoFileField = (
 
 export const buildVideoTitleField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  parentId?: string
 ) => {
-  const build = buildPlainTextField(id, property);
+  const build = buildPlainTextField(id, property, parentId);
   build["id"] = `${id}_title`;
   build["name"] = `${id}_title`;
   build["label"] = build["label"] + " Title";
@@ -35,10 +37,11 @@ export const buildVideoTitleField = (
 
 export const buildVideoPosterField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  parentId?: string
 ) => {
-  const build = buildImageField(id, property);
-  build["id"] = `${id}_poster`;
+  const build = buildImageField(id, property, parentId);
+  build["id"] = `${parentId ? `${parentId}_` : ""}${id}_poster`;
   build["type"] = "image";
   build["name"] = `${id}_poster`;
   build["label"] = build["label"] + " Poster";
@@ -58,9 +61,10 @@ export const buildVideoPosterField = (
 
 export const buildVideoEmbedField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  parentId?: string
 ) => {
-  const build = buildPlainTextField(id, property);
+  const build = buildPlainTextField(id, property, parentId);
   if (typeof property.default === "object" && "url" in property.default)
     build["default"] = property.default.url || "";
   return build;

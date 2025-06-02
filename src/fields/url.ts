@@ -1,8 +1,8 @@
 import { buildBaseField } from "./generic";
 import { PropertyDefinition } from "./types";
 
-const buildUrlField = (id: string, property: PropertyDefinition) => {
-  const build = buildBaseField(id, property);
+const buildUrlField = (id: string, property: PropertyDefinition, parentId?: string) => {
+  const build = buildBaseField(id, property, parentId);
   build["type"] = "url";
   build["supported_types"] = [
     "EXTERNAL",
