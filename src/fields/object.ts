@@ -34,6 +34,6 @@ export const buildObjectGroupField = (
     children: [],
   };
 
-  group.children = buildFields(property.properties);
+  group.children = buildFields(property.properties, id);
   return group;
 };
