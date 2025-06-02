@@ -5,8 +5,7 @@ import buildPlainTextField from "./text";
 
 export const buildBaseGroupField = (
   id: string,
-  property: PropertyDefinition,
-  groupId: string | undefined
+  property: PropertyDefinition
 ): {
   id: string;
   name: string;
@@ -21,7 +20,6 @@ export const buildBaseGroupField = (
   default: any;
   children: any[];
   } => {
-  id = groupId ? `${groupId}_${id}` : id;
   const group = {
     id: `${id}`,
     name: safeLabel(id),
@@ -46,15 +44,14 @@ export const buildBaseGroupField = (
     group.children = buildFields(property.items.properties, id);
   } else if (property.items.type === "text") {
     property.items.name = property.name;
-    group.children = [buildPlainTextField(id, property.items, id)];
+    group.children = [buildPlainTextField(id, property.items)];
   }
   return group;
 };
 
 export const buildBaseField = (
   id: string,
-  property: PropertyDefinition,
-  groupId: string | undefined
+  property: PropertyDefinition
 ): {
   id: string;
   name: string;
@@ -69,7 +66,7 @@ export const buildBaseField = (
   default: any;
   validation_message?: string;
 } => {
-  id = groupId ? `${groupId}_${id}` : id;
+  
   return {
     id: `${id}`,
     name: safeLabel(id),

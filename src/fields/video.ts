@@ -6,10 +6,9 @@ import buildUrlField from "./url";
 
 export const buildVideoFileField = (
   id: string,
-  property: PropertyDefinition,
-  groupId: string | undefined
+  property: PropertyDefinition
 ) => {
-  const build = buildBaseField(id, property, groupId);
+  const build = buildBaseField(id, property);
   build["type"] = "file";
   build["display_width"] = null;
 
@@ -18,10 +17,9 @@ export const buildVideoFileField = (
 
 export const buildVideoTitleField = (
   id: string,
-  property: PropertyDefinition,
-  groupId: string | undefined
+  property: PropertyDefinition
 ) => {
-  const build = buildPlainTextField(id, property, groupId);
+  const build = buildPlainTextField(id, property);
   build["name"] = `${id}_title`;
   build["label"] = build["label"] + " Title";
   build["help_text"] = "Title of the video for accessibility";
@@ -36,10 +34,9 @@ export const buildVideoTitleField = (
 
 export const buildVideoPosterField = (
   id: string,
-  property: PropertyDefinition,
-  groupId: string | undefined
+  property: PropertyDefinition
 ) => {
-  const build = buildImageField(id, property, groupId);
+  const build = buildImageField(id, property);
   build["type"] = "image";
   build["name"] = `${id}_poster`;
   build["label"] = build["label"] + " Poster";
@@ -59,10 +56,9 @@ export const buildVideoPosterField = (
 
 export const buildVideoEmbedField = (
   id: string,
-  property: PropertyDefinition,
-  groupId: string | undefined
+  property: PropertyDefinition
 ) => {
-  const build = buildPlainTextField(id, property, groupId);
+  const build = buildPlainTextField(id, property);
   if (typeof property.default === "object" && "url" in property.default)
     build["default"] = property.default.url || "";
   return build;

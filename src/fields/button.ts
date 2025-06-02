@@ -1,8 +1,8 @@
 import { buildBaseField } from "./generic";
 import { PropertyDefinition } from "./types";
 
-const buildButtonUrlField = (id: string, property: PropertyDefinition, groupId: string | undefined) => {
-  const build = buildBaseField(id, property, groupId);
+const buildButtonUrlField = (id: string, property: PropertyDefinition) => {
+  const build = buildBaseField(id, property);
   build["name"] = `${id}_url`;
   build["type"] = "url";
   build["supported_types"] = [
@@ -42,10 +42,9 @@ const buildButtonUrlField = (id: string, property: PropertyDefinition, groupId: 
 
 export const buildButtonLabelField = (
   id: string,
-  property: PropertyDefinition,
-  groupId: string | undefined 
+  property: PropertyDefinition 
 ) => {
-  const build = buildBaseField(id, property, groupId);
+  const build = buildBaseField(id, property);
   build["name"] = `${id}_text`;
   build["label"] = build["label"] + " Label";
   if (property.rules.pattern) {
