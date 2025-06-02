@@ -7,6 +7,7 @@ const iterator: string[] = [];
 let properties: { [key: string]: PropertyDefinition } = {};
 let chain: PropertyDefinition[] = [];
 let currentProperty: PropertyDefinition | null = null;
+let lastCurrentProperty: PropertyDefinition | null = null;
 let field;
 let inMenuContext;
 
@@ -23,6 +24,7 @@ const transpile: (
   iterator.length = 0;
   chain.length = 0;
   currentProperty = null;
+  lastCurrentProperty = null;
   inMenuContext = undefined;
   field = undefined;
   const parsed = Handlebars.parse(code);
@@ -280,6 +282,7 @@ const block = (node) => {
       } else {
         returnValue += ` {% endif %}`;
       }
+      currentProperty = lastCurrentProperty;
       break;
     case "each":
       let searchSpace = searchForField(variableList);
@@ -357,6 +360,7 @@ const findPart = (part: string, parent: PropertyDefinition | undefined) => {
 
 const findParent = (parts: string[], debug?: boolean) => {
   let parent;
+  lastCurrentProperty = currentProperty;
   for (let part of parts) {
     if (part === "properties") {
       parent = properties;

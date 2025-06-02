@@ -1,5 +1,4 @@
 import { parseRequired, safeLabel, safeName } from "./utils";
-import { v4 as uuidv4 } from "uuid";
 import { PropertyDefinition } from "./types";
 import { buildFields } from "./fields";
 import buildPlainTextField from "./text";
@@ -23,7 +22,7 @@ export const buildBaseGroupField = (
   children: any[];
 } => {
   const group = {
-    id: `${id}_${uuidv4()}`,
+    id: `${id}`,
     name: safeLabel(id),
     label: safeName(property.name),
     required: parseRequired(property.rules),
@@ -70,7 +69,7 @@ export const buildBaseField = (
   validation_message?: string;
 } => {
   return {
-    id: `${id}_${uuidv4()}`,
+    id: `${id}`,
     name: safeLabel(id),
     label: safeName(property.name),
     required: parseRequired(property.rules),
