@@ -1,8 +1,8 @@
 import { buildBaseField } from "./generic";
 import { PropertyDefinition } from "./types";
 
-const buildSelectField = (id: string, property: PropertyDefinition, groupId: string | undefined) => {
-  const build = buildBaseField(id, property, groupId);
+const buildSelectField = (id: string, property: PropertyDefinition) => {
+  const build = buildBaseField(id, property);
   build["display"] = "select";
   build["choices"] = property.options.map((option) => {
     if (typeof option === "string") {
