@@ -3,8 +3,8 @@ import buildPlainTextField, { buildRichTextField } from "./text";
 import { PropertyDefinition } from "./types";
 import { ImageValue } from "./types";
 
-const buildImageField = (id: string, property: PropertyDefinition) => {
-  const build = buildBaseField(id, property);
+const buildImageField = (id: string, property: PropertyDefinition, groupId: string | undefined) => {
+  const build = buildBaseField(id, property, groupId);
   build["type"] = "image";
   build["responsive"] = true;
   let defaultSrc = "";
@@ -30,8 +30,8 @@ const buildImageField = (id: string, property: PropertyDefinition) => {
   return build;
 };
 
-export const buildIconField = (id: string, property: PropertyDefinition) => {
-  const build = buildPlainTextField(id, property);
+export const buildIconField = (id: string, property: PropertyDefinition, groupId: string | undefined) => {
+  const build = buildPlainTextField(id, property, groupId);
   return build;
 };
 export default buildImageField;
