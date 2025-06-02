@@ -4,7 +4,8 @@ import { buildFields } from "./fields";
 
 export const buildObjectGroupField = (
   id: string,
-  property: PropertyDefinition
+  property: PropertyDefinition,
+  groupId: string | undefined
 ): {
   id: string;
   name: string;
@@ -19,6 +20,7 @@ export const buildObjectGroupField = (
   default: any;
   children: any[];
 } => {
+  id = groupId ? `${groupId}_${id}` : id;
   const group = {
     id,
     name: safeLabel(id),
@@ -34,6 +36,6 @@ export const buildObjectGroupField = (
     children: [],
   };
 
-  group.children = buildFields(property.properties);
+  group.children = buildFields(property.properties, id);
   return group;
 };

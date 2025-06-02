@@ -6,6 +6,7 @@ import { buildFields } from "./fields";
 export const buildBooleanField = (
     id: string,
     property: PropertyDefinition,
+    groupId: string | undefined
 ): {
     id: string;
     name: string;
@@ -18,7 +19,8 @@ export const buildBooleanField = (
     type: string;
     display_width: any;
     default: any;
-} => {
+    } => {
+    id = groupId ? `${groupId}_${id}` : id;
     const group = {
         id: `${id}`,
         name: safeLabel(id),
