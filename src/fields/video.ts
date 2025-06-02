@@ -20,6 +20,7 @@ export const buildVideoTitleField = (
   property: PropertyDefinition
 ) => {
   const build = buildPlainTextField(id, property);
+  build["id"] = `${id}_title`;
   build["name"] = `${id}_title`;
   build["label"] = build["label"] + " Title";
   build["help_text"] = "Title of the video for accessibility";
@@ -37,6 +38,7 @@ export const buildVideoPosterField = (
   property: PropertyDefinition
 ) => {
   const build = buildImageField(id, property);
+  build["id"] = `${id}_poster`;
   build["type"] = "image";
   build["name"] = `${id}_poster`;
   build["label"] = build["label"] + " Poster";

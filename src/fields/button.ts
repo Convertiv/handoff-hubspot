@@ -3,6 +3,7 @@ import { PropertyDefinition } from "./types";
 
 const buildButtonUrlField = (id: string, property: PropertyDefinition) => {
   const build = buildBaseField(id, property);
+  build["id"] = `${id}_url`;
   build["name"] = `${id}_url`;
   build["type"] = "url";
   build["supported_types"] = [
@@ -45,6 +46,7 @@ export const buildButtonLabelField = (
   property: PropertyDefinition 
 ) => {
   const build = buildBaseField(id, property);
+  build["id"] = `${id}_text`;
   build["name"] = `${id}_text`;
   build["label"] = build["label"] + " Label";
   if (property.rules.pattern) {

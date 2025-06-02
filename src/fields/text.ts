@@ -52,6 +52,7 @@ export const buildLinkTextField = (
   property: PropertyDefinition 
 ) => {
   const build = buildBaseField(id, property);
+  build["id"] = `${id}_text`;
   build["name"] = `${id}_text`;
   build["label"] = build["label"] + " Text";
   if (property.rules) {
