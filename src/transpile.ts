@@ -240,6 +240,23 @@ const block = (node) => {
         }
       }
 
+      // Special handling for button/link target attribute
+      if (findProperty?.type === "button" || findProperty?.type === "link" && variable === "target") {
+        console.log("Button target attribute detected");
+        let statement = `${target}.${findProperty.id}_url.type == 'EXTERNAL'`;
+        if (isExpression) {
+          statement = value;
+        }
+        returnValue = `{% if ${statement} %} target="_blank"`;
+        if (node.inverse) {
+          returnValue += `{% else %} ${program(node.inverse)} {% endif %}`;
+        } else {
+          returnValue += ` {% endif %}`;
+        }
+        currentProperty = lastCurrentProperty;
+        break;
+      }
+
       if (
         variableList[0] === "@first" ||
         variableList[0] === "@last" ||
@@ -440,6 +457,13 @@ const mustache = (node) => {
               value += `_url.href|escape_attr`;
             } else if (part === "rel") {
               value += `.rel|escape_attr`;
+            } else if (part === "target" && parentProperty.type === "button") {
+              // Special handling for button target - convert to conditional logic
+              // Find the property key from the properties object
+              const propertyKey = Object.keys(properties).find(key => properties[key] === parentProperty);
+              const buttonId = propertyKey || 'button';
+              value = `{% if module.${buttonId}_url.type == 'EXTERNAL' %}target="_blank" rel="noopener"{% endif %}`;
+              return `{{ ${value} }}`;
             }
           } else if (property.type === "url") {
             value += `.${part}.href|escape_attr`;
