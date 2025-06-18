@@ -241,9 +241,13 @@ const block = (node) => {
       }
 
       // Special handling for button/link target attribute
-      if (findProperty?.type === "button" || findProperty?.type === "link" && variable === "target") {
-        console.log("Button target attribute detected");
-        let statement = `${target}.${findProperty.id}_url.type == 'EXTERNAL'`;
+      if ((findProperty?.type === "button" || findProperty?.type === "link") && variable === "target") {
+        // Find the property key from the properties object
+        const propertyKey = Object.keys(properties).find(key => properties[key] === findProperty);
+        const elementId = propertyKey || (findProperty.type === "button" ? "button" : "link");
+        // Use the current context (loop variable if in a loop, otherwise module)
+        const context = iterator.length > 0 ? iterator[iterator.length - 1] : target;
+        let statement = `${context}.${elementId}_url.type == 'EXTERNAL'`;
         if (isExpression) {
           statement = value;
         }
@@ -457,13 +461,6 @@ const mustache = (node) => {
               value += `_url.href|escape_attr`;
             } else if (part === "rel") {
               value += `.rel|escape_attr`;
-            } else if (part === "target" && parentProperty.type === "button") {
-              // Special handling for button target - convert to conditional logic
-              // Find the property key from the properties object
-              const propertyKey = Object.keys(properties).find(key => properties[key] === parentProperty);
-              const buttonId = propertyKey || 'button';
-              value = `{% if module.${buttonId}_url.type == 'EXTERNAL' %}target="_blank" rel="noopener"{% endif %}`;
-              return `{{ ${value} }}`;
             }
           } else if (property.type === "url") {
             value += `.${part}.href|escape_attr`;
