@@ -240,6 +240,27 @@ const block = (node) => {
         }
       }
 
+      // Special handling for button/link target attribute
+      if ((findProperty?.type === "button" || findProperty?.type === "link") && variable === "target") {
+        // Find the property key from the properties object
+        const propertyKey = Object.keys(properties).find(key => properties[key] === findProperty);
+        const elementId = propertyKey || (findProperty.type === "button" ? "button" : "link");
+        // Use the current context (loop variable if in a loop, otherwise module)
+        const context = iterator.length > 0 ? iterator[iterator.length - 1] : target;
+        let statement = `${context}.${elementId}_url.type == 'EXTERNAL'`;
+        if (isExpression) {
+          statement = value;
+        }
+        returnValue = `{% if ${statement} %} target="_blank"`;
+        if (node.inverse) {
+          returnValue += `{% else %} ${program(node.inverse)} {% endif %}`;
+        } else {
+          returnValue += ` {% endif %}`;
+        }
+        currentProperty = lastCurrentProperty;
+        break;
+      }
+
       if (
         variableList[0] === "@first" ||
         variableList[0] === "@last" ||
