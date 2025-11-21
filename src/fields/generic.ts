@@ -44,8 +44,12 @@ export const buildBaseGroupField = (
   if (property.items.type === "object") {
     group.children = buildFields(property.items.properties, id);
   } else if (property.items.type === "text") {
-    property.items.name = property.name + "_text";
-    group.children = [buildPlainTextField(id, property.items)];
+    property.items.name = property.name;
+    let children = buildFields(property.items.properties, id);
+    group.children = children.map((child: any) => {
+      child.id = child.id + "_text";
+      return child;
+    });
   }
   return group;
 };
