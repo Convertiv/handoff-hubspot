@@ -173,6 +173,7 @@ const block = (node) => {
 
   let variable = variableList[variableList.length - 1];
   let returnValue;
+  let target = "module";
   switch (node.path.original) {
     case "field":
       let parentTarget = "module";
@@ -209,7 +210,8 @@ const block = (node) => {
       returnValue = `${formatValue}\n${program(node.program)}{# end field #}`;
       break;
     case "if":
-      let target = "module";
+    case "unless":
+      
       let findProperty = findParent(variableList);
       // ask if the variable is a property
       if (findProperty) {
@@ -297,11 +299,15 @@ const block = (node) => {
       } else if (variable === "@length") {
         statement = "loop.length";
       }
-      returnValue = `{% if ${statement} %} ${program(node.program)}`;
-      if (node.inverse) {
-        returnValue += `{% else %} ${program(node.inverse)} {% endif %}`;
+      if(node.path.original === "if") {
+        returnValue = `{% if ${statement} %} ${program(node.program)}`;
+        if (node.inverse) {
+          returnValue += `{% else %} ${program(node.inverse)} {% endif %}`;
+        } else {
+          returnValue += ` {% endif %}`;
+        }
       } else {
-        returnValue += ` {% endif %}`;
+        returnValue = `{% unless ${statement} %} ${program(node.program)} {% endunless %}`;
       }
       currentProperty = lastCurrentProperty;
       break;
