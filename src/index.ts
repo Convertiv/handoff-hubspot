@@ -84,7 +84,7 @@ export const fetchComponent: (
 ) => Promise<HandoffComponentResponse> = async (componentId: string) => {
   try {
     const request = await init();
-    const response = await request.get(`component/${componentId}/latest.json`);
+    const response = await request.get(`component/${componentId}.json`);
     // Parse response and create a web component from response
     // check the response code
     if (response.status !== 200) {

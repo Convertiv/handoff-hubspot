@@ -454,6 +454,7 @@ const mustache = (node) => {
           if (parentProperty) {
             field = part;
           }
+          
           if (!property) {
             value += `.${part}`;
           } else if (
