@@ -1,7 +1,7 @@
-import { parseRequired, safeLabel, safeName } from "./utils";
-import { PropertyDefinition } from "./types";
-import { buildFields } from "./fields";
-import buildPlainTextField from "./text";
+import { parseRequired, safeLabel, safeName } from "./utils.js";
+import { PropertyDefinition } from "./types.js";
+import { buildFields } from "./fields.js";
+import buildPlainTextField from "./text.js";
 
 export const buildBaseGroupField = (
   id: string,
@@ -34,14 +34,14 @@ export const buildBaseGroupField = (
     display_width: null,
     default: property.default,
     occurrence: {
-      min: property.rules.content?.min || 0,
-      max: property.rules.content?.max || 0,
+      min: property.rules?.content?.min || 0,
+      max: property.rules?.content?.max || 0,
       sorting_label_field: null,
-      default: property.rules.content?.min || 0,
+      default: property.rules?.content?.min || 0,
     },
     children: [],
   };
-  if (property.items.type === "object") {
+  if (property.items.type === "object" && property.items.properties) {
     group.children = buildFields(property.items.properties, id);
   } else if (property.items.type === "text") {
     

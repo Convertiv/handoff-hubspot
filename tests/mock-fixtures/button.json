@@ -1,0 +1,31 @@
+{
+  "id": "button",
+  "title": "Button",
+  "type": "component",
+  "properties": {
+    "Type": {
+      "type": "text",
+      "default": "primary",
+      "rules": {
+        "required": true
+      },
+      "name": "Type",
+      "description": "Type description"
+    },
+    "label": {
+      "type": "text",
+      "default": "Click me",
+      "rules": {},
+      "name": "label",
+      "description": "label description"
+    },
+    "url": {
+      "type": "text",
+      "default": "",
+      "rules": {},
+      "name": "url",
+      "description": "url description"
+    }
+  },
+  "code": "<div>{{properties.Type}} <a href=\"{{properties.url}}\">{{properties.label}}</a></div>"
+}

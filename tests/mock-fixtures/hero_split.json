@@ -1,0 +1,105 @@
+{
+  "id": "hero_split",
+  "title": "Hero Split",
+  "type": "component",
+  "properties": {
+    "dark": {
+      "type": "boolean",
+      "default": false,
+      "rules": {},
+      "name": "dark",
+      "description": "dark description"
+    },
+    "primary": {
+      "type": "button",
+      "default": {
+        "label": "Primary CTA",
+        "url": "https://ssctech.com"
+      },
+      "rules": {},
+      "name": "primary",
+      "description": "primary description"
+    },
+    "secondary": {
+      "type": "button",
+      "default": {
+        "label": "Secondary CTA",
+        "url": ""
+      },
+      "label": "Label",
+      "rules": {},
+      "name": "secondary",
+      "description": "secondary description"
+    },
+    "image": {
+      "type": "image",
+      "default": {
+        "src": "x",
+        "alt": "x"
+      },
+      "rules": {},
+      "name": "image",
+      "description": "image description"
+    },
+    "backgroundImage": {
+      "type": "image",
+      "default": {
+        "src": "y",
+        "alt": "y"
+      },
+      "rules": {
+        "dimensions": {
+          "max": {
+            "width": 4200,
+            "height": 2100
+          }
+        }
+      },
+      "name": "backgroundImage",
+      "description": "backgroundImage description"
+    },
+    "backgroundVideo": {
+      "type": "video_file",
+      "default": {},
+      "rules": {},
+      "name": "backgroundVideo",
+      "description": "backgroundVideo description"
+    },
+    "linksItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "text",
+            "default": "",
+            "rules": {},
+            "name": "title",
+            "description": "title description"
+          },
+          "cardLink": {
+            "type": "link",
+            "default": {
+              "text": "",
+              "href": ""
+            },
+            "rules": {},
+            "name": "cardLink",
+            "description": "cardLink description"
+          }
+        },
+        "name": "linksItems_item",
+        "description": "item"
+      },
+      "rules": {
+        "content": {
+          "min": 1,
+          "max": 10
+        }
+      },
+      "name": "linksItems",
+      "description": "linksItems description"
+    }
+  },
+  "code": "\n{{#field \"image\"}}{{/field}}\n{{#if properties.dark}}dark{{/if}}\n{{#unless properties.image.src}}no-img{{/unless}}\n{{#if properties.primary}} <a href=\"{{properties.primary.url.href}}\">{{properties.primary.label}}</a> {{/if}}\n<a href=\"{{properties.secondary.url.href}}\">{{properties.secondary.label}}</a>\n<img src=\"{{properties.image.src}}\" alt=\"{{properties.image.alt}}\"/>\n<img src=\"{{properties.backgroundImage.src}}\" alt=\"{{properties.backgroundImage.alt}}\"/>\n<video src=\"{{properties.backgroundVideo.src}}\"></video>\n{{#each properties.linksItems}}\n  {{this.title}} <a href=\"{{this.cardLink.href}}\">{{this.cardLink.text}}</a>\n{{/each}}\n"
+}

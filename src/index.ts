@@ -2,16 +2,17 @@
 import axios from "axios";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import { exec } from "child_process";
 
-import { createConfigCommand, readConfig } from "./config/command";
-import { validateAll } from "./validate";
+import { createConfigCommand, readConfig } from "./config/command.js";
+import { validateAll } from "./validate/index.js";
 import {
   HandoffComponentListResponse,
   HandoffComponentResponse,
-} from "./fields/types";
-import validateComponent from "./validate";
+} from "./fields/types.js";
+import validateComponent from "./validate/index.js";
 import chalk from "chalk";
-import buildModule, { fetchAll, writeSharedCss, writeSharedJs } from "./fetch";
+import buildModule, { fetchAll, writeSharedCss, writeSharedJs } from "./fetch/index.js";
 
 const init = async () => {
   const config = readConfig();
@@ -125,7 +126,7 @@ const open = (url: string) => {
       : process.platform == "win32"
         ? "start"
         : "xdg-open";
-  require("child_process").exec(start + " " + url);
+  exec(start + " " + url);
 };
 
 const openDocs = async (componentId: string) => {

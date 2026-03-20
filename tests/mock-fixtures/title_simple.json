@@ -1,0 +1,15 @@
+{
+  "id": "title_simple",
+  "title": "Title Simple",
+  "type": "component",
+  "properties": {
+    "title": {
+      "type": "text",
+      "default": "Title",
+      "rules": {},
+      "name": "title",
+      "description": "title description"
+    }
+  },
+  "code": "<h1>{{properties.title}}</h1>"
+}

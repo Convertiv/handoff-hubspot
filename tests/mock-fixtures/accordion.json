@@ -1,0 +1,59 @@
+{
+  "id": "accordion",
+  "title": "Accordion Component",
+  "type": "component",
+  "properties": {
+    "identifier": {
+      "type": "text",
+      "default": "id_1",
+      "rules": {
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "name": "identifier",
+      "description": "identifier description"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "text",
+            "default": "",
+            "rules": {},
+            "name": "title",
+            "description": "title description"
+          },
+          "paragraph": {
+            "type": "richtext",
+            "default": "",
+            "rules": {},
+            "name": "paragraph",
+            "description": "paragraph description"
+          },
+          "link": {
+            "type": "link",
+            "default": {
+              "text": "",
+              "href": ""
+            },
+            "rules": {},
+            "name": "link",
+            "description": "link description"
+          }
+        },
+        "name": "items_item",
+        "description": "item"
+      },
+      "rules": {
+        "content": {
+          "min": 1,
+          "max": 20
+        }
+      },
+      "name": "items",
+      "description": "items description"
+    }
+  },
+  "code": "\n{{#field \"items\"}}\n  {{#each properties.items}}\n    {{#field \"items.title\"}}{{/field}}\n    {{#field \"items.paragraph\"}}{{/field}}\n    <h1>{{this.title}} {{@index}} {{../properties.identifier}}</h1>\n    <p>{{this.paragraph}}</p>\n    <a href=\"{{this.link.href}}\">{{this.link.text}}</a>\n  {{/each}}\n{{/field}}\n"
+}

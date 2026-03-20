@@ -1,0 +1,21 @@
+{
+  "id": "select_comp",
+  "title": "Select Component",
+  "type": "component",
+  "properties": {
+    "choice": {
+      "type": "select",
+      "options": [
+        {
+          "label": "A",
+          "value": "A"
+        }
+      ],
+      "default": "A",
+      "rules": {},
+      "name": "choice",
+      "description": "choice description"
+    }
+  },
+  "code": "<b>{{properties.choice}}</b>"
+}

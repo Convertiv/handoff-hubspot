@@ -1,0 +1,49 @@
+{
+  "id": "menu",
+  "title": "Menu Component",
+  "type": "component",
+  "properties": {
+    "mobile": {
+      "type": "menu",
+      "default": {},
+      "rules": {},
+      "name": "mobile",
+      "description": "mobile description"
+    },
+    "search": {
+      "type": "search",
+      "default": {},
+      "rules": {},
+      "name": "search",
+      "description": "search description"
+    },
+    "buttons": {
+      "type": "object",
+      "properties": {
+        "outline": {
+          "type": "link",
+          "default": {
+            "text": "Outline",
+            "href": "/outline"
+          },
+          "rules": {},
+          "name": "outline",
+          "description": "outline description"
+        }
+      },
+      "rules": {},
+      "name": "buttons",
+      "description": "buttons description"
+    },
+    "url": {
+      "type": "url",
+      "default": {
+        "href": "/test"
+      },
+      "rules": {},
+      "name": "url",
+      "description": "url description"
+    }
+  },
+  "code": "\n{{#field \"menu\"}}{{/field}}\n{{#field \"mobile\"}}\n  {{#each properties.mobile}}\n    <a href=\"{{this.url}}\">{{this.label}}</a>\n  {{/each}}\n{{/field}}\n{{#field \"search\"}}{{/field}}\n<a href=\"{{properties.buttons.outline.href}}\">btn</a>\n"
+}

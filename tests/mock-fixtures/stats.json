@@ -1,0 +1,27 @@
+{
+  "id": "stats",
+  "title": "Stats",
+  "type": "component",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "text",
+            "rules": {},
+            "name": "number",
+            "description": "number description"
+          }
+        },
+        "name": "items_item",
+        "description": "item"
+      },
+      "rules": {},
+      "name": "items",
+      "description": "items description"
+    }
+  },
+  "code": "{{#each properties.items}}{{this.number}}{{/each}}"
+}

@@ -1,6 +1,6 @@
-import { parseRequired, safeLabel, safeName } from "./utils";
-import { PropertyDefinition } from "./types";
-import { buildFields } from "./fields";
+import { parseRequired, safeLabel, safeName } from "./utils.js";
+import { PropertyDefinition } from "./types.js";
+import { buildFields } from "./fields.js";
 
 
 export const buildBooleanField = (

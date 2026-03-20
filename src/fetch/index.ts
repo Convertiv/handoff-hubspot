@@ -1,12 +1,12 @@
 import chalk from "chalk";
-import { formatErrors, validateAll, validateModule } from "../validate";
-import { fetchComponent, fetchComponentList } from "..";
-import transpile from "../transpile";
+import { formatErrors, validateAll, validateModule } from "../validate/index.js";
+import { fetchComponent, fetchComponentList } from "../index.js";
+import transpile from "../transpile.js";
 import * as prettier from "prettier";
-import { HandoffComponent } from "../fields/types";
-import { readConfig } from "../config/command";
+import { HandoffComponent } from "../fields/types.js";
+import { readConfig } from "../config/command.js";
 import fs from "fs";
-import { buildFields } from "../fields/fields";
+import { buildFields } from "../fields/fields.js";
 
 const buildMeta = (component: HandoffComponent) => {
   const config = readConfig();

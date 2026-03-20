@@ -134,6 +134,7 @@ export interface PropertyDefinition {
   description: string;
   rules: RulesDefinition;
   default: ValueDefinition;
+  id?: string;
   properties?: { [key: string]: PropertyDefinition };
   items?: PropertyDefinition;
   options?:

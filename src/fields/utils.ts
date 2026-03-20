@@ -1,4 +1,4 @@
-import { RulesDefinition } from "./types";
+import { RulesDefinition } from "./types.js";
 
 export const parseRequired = (rules: RulesDefinition) => {
   return rules?.required ? Boolean(rules.required) : false;
