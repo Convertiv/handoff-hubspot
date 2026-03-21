@@ -99,6 +99,26 @@ export const fetchComponent: (
 };
 
 /**
+ * Fetch component JS from handoff api
+ * @param componentId
+ * @returns string | null
+ */
+export const fetchComponentJs: (
+  componentId: string
+) => Promise<string | null> = async (componentId: string) => {
+  try {
+    const request = await init();
+    const response = await request.get(`component/${componentId}.js`);
+    if (response.status !== 200) {
+      return null;
+    }
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
  * Fetch component from handoff api
  * @param componentId
  * @returns Object
@@ -173,7 +193,8 @@ const main = async () => {
       command: "styles",
       describe: "Fetch shared styles from handoff",
       handler: async () => {
-        console.log(`-- Fetching shared component css ---\n`);
+        console.log(`-- Fetching shared component css ---
+`);
         fetchSharedStyles();
       },
     })
@@ -181,7 +202,8 @@ const main = async () => {
       command: "scripts",
       describe: "Fetch shared scripts from handoff",
       handler: async () => {
-        console.log(`-- Fetching shared component js ---\n`);
+        console.log(`-- Fetching shared component js ---
+`);
         fetchSharedScripts();
       },
     })
@@ -189,7 +211,8 @@ const main = async () => {
       command: "list",
       describe: "List the components available in handoff",
       handler: async (parsed) => {
-        console.log(`-- List all Components---\n`);
+        console.log(`-- List all Components---
+`);
         await listComponents();
       },
     })
@@ -198,7 +221,8 @@ const main = async () => {
       describe: "Open the documentation page for a component",
 
       handler: async (parsed) => {
-        console.log(`-- Opening component ${parsed.component}---\n`);
+        console.log(`-- Opening component ${parsed.component}---
+`);
         await openDocs(parsed.component);
       },
     })
@@ -214,7 +238,8 @@ const main = async () => {
         });
       },
       handler: async (parsed) => {
-        console.log(`-- Fetching component ${parsed.component}---\n`);
+        console.log(`-- Fetching component ${parsed.component}---
+`);
         await buildModule(parsed.component, parsed.force);
       },
     })
