@@ -19,7 +19,8 @@ export type FieldType =
   | "boolean"
   | "search"
   | "menu"
-  | "icon";
+  | "icon"
+  | "hubdbtable";
 
 export const FieldTypes: FieldType[] = [
   "text",
@@ -43,6 +44,7 @@ export const FieldTypes: FieldType[] = [
   "menu",
   "search",
   "icon",
+  "hubdbtable",
 ];
 
 export type ComponentType = "element" | "block";

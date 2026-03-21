@@ -1,5 +1,6 @@
 import Handlebars from "handlebars";
 import { PropertyDefinition } from "./fields/types.js";
+import { AppConfig } from "./config/command.js";
 import { v4 as uuidv4 } from "uuid";
 import chalk from "chalk";
 import { TranspileContext } from "./context.js";
@@ -48,6 +49,13 @@ const buildSearchMeta = (_property: PropertyDefinition): string => {
 const translateExpression = (param: any, ctx: TranspileContext): string => {
   if (param.type === "PathExpression") {
     let value = param.original as string;
+
+    if (ctx.hubdbTargetProperty) {
+      if (value === `properties.${ctx.hubdbTargetProperty}` || value === `../properties.${ctx.hubdbTargetProperty}`) {
+         return "component_data";
+      }
+    }
+
     value = value.replace("properties.", "module.");
     const iter = ctx.currentIterator();
     if (iter) {
@@ -86,6 +94,19 @@ const handleExpression = (node: any, ctx: TranspileContext): string => {
 // ─── Mustache Handler ─────────────────────────────────────────────────────────
 
 const handleMustache = (node: any, ctx: TranspileContext): string => {
+  if (node.path.original === 'json' && node.params && node.params.length > 0) {
+    const fakeNode = {
+      type: 'MustacheStatement',
+      path: node.params[0]
+    };
+    const innerValue = handleMustache(fakeNode, ctx);
+    const match = innerValue.match(/^\{\{\s*(.*?)\s*\}\}$/);
+    if (match) {
+      return `{{ ${match[1]}|tojson }}`;
+    }
+    return `{{ ${innerValue}|tojson }}`;
+  }
+
   let value = node.path.original as string;
   let property: PropertyDefinition | undefined;
   let parentProperty: PropertyDefinition | undefined;
@@ -104,8 +125,13 @@ const handleMustache = (node: any, ctx: TranspileContext): string => {
     if (value.includes("../properties.")) {
       value = value.replace("../properties.", "properties.");
     }
-    const valueParts = value.split(".");
-    for (const part of valueParts) {
+
+    if (ctx.hubdbTargetProperty && value === `properties.${ctx.hubdbTargetProperty}`) {
+        value = "component_data";
+        searchSpace = ctx.properties;
+    } else {
+      const valueParts = value.split(".");
+      for (const part of valueParts) {
       if (part === "this") {
         const iter = ctx.currentIterator();
         value = iter!;
@@ -172,6 +198,7 @@ const handleMustache = (node: any, ctx: TranspileContext): string => {
           }
         }
       }
+    }
     }
     property = null;
   }
@@ -360,6 +387,10 @@ const handleIfUnless = (
     statement = value;
   }
 
+  if (!isExpression && ctx.hubdbTargetProperty && value === `properties.${ctx.hubdbTargetProperty}`) {
+    statement = "component_data";
+  }
+
   if (variable === "@first") {
     statement = "loop.first";
   } else if (variable === "@last") {
@@ -478,11 +509,112 @@ export const handleProgram = (
  */
 const transpile = (
   code: string,
-  props?: { [key: string]: PropertyDefinition }
+  props?: { [key: string]: PropertyDefinition },
+  config?: AppConfig,
+  componentId?: string
 ): string => {
-  const ctx = new TranspileContext(props || {});
+  const ctx = new TranspileContext(props || {}, config, componentId);
   const parsed = Handlebars.parse(code);
-  return handleProgram(parsed, ctx);
+  let output = handleProgram(parsed, ctx);
+
+  if (ctx.config && ctx.componentId && ctx.config.hubdb_mappings && ctx.config.hubdb_mappings[ctx.componentId]) {
+      const mapping = ctx.config.hubdb_mappings[ctx.componentId];
+      if (mapping.mapping_type === "xy") {
+      let xKey = "x";
+      let yKey = "y";
+      //@ts-ignore
+      const targetProp = ctx.properties[mapping.target_property];
+      if (targetProp && targetProp.items && targetProp.items.properties) {
+          const keys = Object.keys(targetProp.items.properties);
+          if (keys.length >= 2) {
+              xKey = keys[0];
+              yKey = keys[1];
+          }
+      }
+      output = `{% set component_data = module.${mapping.target_property} %}
+{% if module.source == "query" %}
+  {% set chart_qs = "limit=" ~ module.query_configs.limit %}
+  {% if module.query_configs.sort_column %}
+    {% set dir = module.query_configs.sort_direction == "desc" ? "-" : "" %}
+    {% set chart_qs = chart_qs ~ "&orderBy=" ~ dir ~ module.query_configs.sort_column %}
+  {% endif %}
+  {% set db_rows = hubdb_table_rows(module.query_configs.hubdb_table, chart_qs) %}
+  {% set table_info = hubdb_table(module.query_configs.hubdb_table) %}
+  {% set col_map = {} %}
+  {% for col in table_info.columns %}
+    {% do col_map.put(col.name, col.id|string) %}
+  {% endfor %}
+  {% set x_id = col_map[module.query_configs.x_column] || module.query_configs.x_column %}
+  {% set y_id = col_map[module.query_configs.y_column] || module.query_configs.y_column %}\n  {% if module.query_configs.show_diagnostics %}
+  <div style="background: #f4f6f9; border: 1px solid #cbd6e2; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-family: sans-serif; font-size: 13px; color: #33475b; line-height: 1.5;">
+    <strong style="display: block; margin-bottom: 10px; font-size: 15px;">HubDB Query Diagnostics</strong>
+    <p style="margin: 0 0 10px;"><strong>Table Selected:</strong> {{ module.query_configs.hubdb_table }}</p>
+    <p style="margin: 0 0 5px;"><strong>Available Columns:</strong></p>
+    <ul style="margin: 0; padding-left: 20px;">
+      {% for col in table_info.columns %}
+        <li>{{ col.label }} &mdash; <code>{{ col.name }}</code></li>
+      {% endfor %}
+    </ul>
+    <p style="margin: 10px 0 0; color: #ff7a59;"><em>Note: Turn off "Show Table Diagnostics" in the sidebar before publishing.</em></p>
+  </div>
+  {% endif %}
+
+  {% set ser_data = [] %}
+  {% for row in db_rows %}
+    {% do ser_data.append({ "${xKey}": row[x_id], "${yKey}": row[y_id] }) %}
+  {% endfor %}
+  {% set component_data = ser_data %}
+{% endif %}
+` + output;
+      } else if (mapping.mapping_type === "multi_series") {
+          output = `{% set component_data = module.${mapping.target_property} %}
+{% if module.source == "query" %}
+  {% set chart_qs = "limit=" ~ module.query_configs.limit %}
+  {% if module.query_configs.sort_column %}
+    {% set dir = module.query_configs.sort_direction == "desc" ? "-" : "" %}
+    {% set chart_qs = chart_qs ~ "&orderBy=" ~ dir ~ module.query_configs.sort_column %}
+  {% endif %}
+  {% set db_rows = hubdb_table_rows(module.query_configs.hubdb_table, chart_qs) %}
+  {% set table_info = hubdb_table(module.query_configs.hubdb_table) %}
+  {% set col_map = {} %}
+  {% for col in table_info.columns %}
+    {% do col_map.put(col.name, col.id|string) %}
+  {% endfor %}
+  {% set x_id = col_map[module.query_configs.x_column] || module.query_configs.x_column %}
+  {% if module.query_configs.show_diagnostics %}
+  <div style="background: #f4f6f9; border: 1px solid #cbd6e2; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-family: sans-serif; font-size: 13px; color: #33475b; line-height: 1.5;">
+    <strong style="display: block; margin-bottom: 10px; font-size: 15px;">HubDB Query Diagnostics</strong>
+    <p style="margin: 0 0 10px;"><strong>Table Selected:</strong> {{ module.query_configs.hubdb_table }}</p>
+    <p style="margin: 0 0 5px;"><strong>Available Columns:</strong></p>
+    <ul style="margin: 0; padding-left: 20px;">
+      {% for col in table_info.columns %}
+        <li>{{ col.label }} &mdash; <code>{{ col.name }}</code></li>
+      {% endfor %}
+    </ul>
+    <p style="margin: 10px 0 0; color: #ff7a59;"><em>Note: Turn off "Show Table Diagnostics" in the sidebar before publishing.</em></p>
+  </div>
+  {% endif %}
+  {% set cats = [] %}
+  {% for row in db_rows %}
+    {% do cats.append(row[x_id]) %}
+  {% endfor %}
+
+  {% set series_list = [] %}
+  {% for series_cfg in module.query_configs.y_series %}
+    {% set ser_data = [] %}
+    {% set y_id = col_map[series_cfg.y_column] || series_cfg.y_column %}
+    {% for row in db_rows %}
+      {% do ser_data.append(row[y_id]) %}
+    {% endfor %}
+    {% do series_list.append({ "name": series_cfg.series_name, "data": ser_data, "colorKey": series_cfg.color }) %}
+  {% endfor %}
+  {% set component_data = { "categories": cats, "series": series_list } %}
+{% endif %}
+` + output;
+      }
+  }
+
+  return output;
 };
 
 // Re-export for backward compatibility
