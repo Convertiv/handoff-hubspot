@@ -1,4 +1,5 @@
 import { PropertyDefinition } from "./fields/types.js";
+import { AppConfig } from "./config/command.js";
 
 /**
  * Encapsulates all mutable state for a single transpile() call.
@@ -29,8 +30,21 @@ export class TranspileContext {
   /** When inside a {{#field menu}} block, holds the HubL menu variable name */
   menuContext: string | undefined = undefined;
 
-  constructor(properties: { [key: string]: PropertyDefinition }) {
+  readonly config?: AppConfig;
+  readonly componentId?: string;
+  readonly hubdbTargetProperty?: string;
+
+  constructor(
+    properties: { [key: string]: PropertyDefinition },
+    config?: AppConfig,
+    componentId?: string
+  ) {
     this.properties = properties;
+    this.config = config;
+    this.componentId = componentId;
+    if (config?.hubdb_mappings && componentId && config.hubdb_mappings[componentId]) {
+      this.hubdbTargetProperty = config.hubdb_mappings[componentId].target_property;
+    }
   }
 
   // ─── Iterator Stack ─────────────────────────────────────────────────────────

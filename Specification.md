@@ -66,7 +66,7 @@ All recognized field types:
 text | richtext | number | boolean | checkbox
 select | image | icon | button | link | url
 breadcrumb | video_file | video_embed | file
-array | object | menu | search | pagination
+array | object | menu | search | pagination | hubdbtable
 ```
 
 ### 1.4 RulesDefinition
@@ -452,7 +452,12 @@ loop.index == 1
 
 Note the `+1` offset applied to numeric literals when the left operand is `@index` (§3.3).
 
-### 3.11 Post-Processing
+### 3.12 HubDB Array Mappings
+
+When a component array field is mapped to HubDB via `handoff.config.json` `hubdb_mappings`, the transpiler interrupts standard arrays compilation.
+Instead, it prepends a generic HubDB row-fetching script using HubL dict capabilities to map data columns. The payload Handlebars expressions for `properties.array_name` are then replaced with the dynamically constructed `component_data` HubDB payload rendering variable.
+
+### 3.13 Post-Processing
 
 After transpilation the HubL string is passed through `prettier` with the `prettier-plugin-jinja-template` parser. If formatting fails (e.g. due to an untranslated Handlebars construct) the unformatted string is used and a warning is logged.
 
@@ -651,6 +656,12 @@ Produces **three** fields:
 
 ```json
 { "type": "menu" }
+```
+
+#### `hubdbtable`
+
+```json
+{ "type": "hubdbtable" }
 ```
 
 #### `array`
