@@ -1,5 +1,5 @@
 import { PropertyDefinition } from "./fields/types.js";
-import { AppConfig } from "./config/command.js";
+import { HubdbMapping } from "./config/command.js";
 
 /**
  * Encapsulates all mutable state for a single transpile() call.
@@ -30,20 +30,17 @@ export class TranspileContext {
   /** When inside a {{#field menu}} block, holds the HubL menu variable name */
   menuContext: string | undefined = undefined;
 
-  readonly config?: AppConfig;
-  readonly componentId?: string;
   readonly hubdbTargetProperty?: string;
+  readonly hubdbMappingType?: "xy" | "multi_series";
 
   constructor(
     properties: { [key: string]: PropertyDefinition },
-    config?: AppConfig,
-    componentId?: string
+    hubdbMapping?: HubdbMapping | null,
   ) {
     this.properties = properties;
-    this.config = config;
-    this.componentId = componentId;
-    if (config?.hubdb_mappings && componentId && config.hubdb_mappings[componentId]) {
-      this.hubdbTargetProperty = config.hubdb_mappings[componentId].target_property;
+    if (hubdbMapping) {
+      this.hubdbTargetProperty = hubdbMapping.target_property;
+      this.hubdbMappingType = hubdbMapping.mapping_type;
     }
   }
 

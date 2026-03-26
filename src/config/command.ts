@@ -1,12 +1,30 @@
 import fs from "fs";
 import prompts from "prompts";
+
+export interface ComponentImportConfig {
+  type?: "hubdb";
+  target_property?: string;
+  mapping_type?: "xy" | "multi_series";
+  js?: boolean;
+  css?: boolean;
+}
+
+export interface HubdbMapping {
+  target_property: string;
+  mapping_type: "xy" | "multi_series";
+}
+
+export type ImportTypeConfig = boolean | {
+  [componentId: string]: boolean | ComponentImportConfig;
+};
+
 export interface AppConfig {
   version: string;
   url: string;
   cssPath: string;
   jsPath: string;
-  moduleJS: boolean;  componentJS?: string[];
-  moduleCSS: boolean;  componentCSS?: string[];
+  moduleJS: boolean;
+  moduleCSS: boolean;
   modulesPath: string;
   modulePrefix: string;
   username: string;
@@ -23,13 +41,67 @@ export interface AppConfig {
       };
     };
   };
-  hubdb_mappings?: {
-    [key: string]: {
-      target_property: string;
-      mapping_type: "xy" | "multi_series";
-    };
+  import?: {
+    [componentType: string]: ImportTypeConfig;
   };
 }
+
+/**
+ * Resolve the import config for a specific component.
+ * Returns null (skip this component), true (import normally),
+ * or a ComponentImportConfig object (import with overrides).
+ */
+export const getComponentImportConfig = (
+  config: AppConfig,
+  componentType: string,
+  componentId: string
+): null | true | ComponentImportConfig => {
+  if (!config.import) return true;
+
+  const typeConfig = config.import[componentType];
+
+  if (typeConfig === undefined) return true;
+  if (typeConfig === false) return null;
+  if (typeConfig === true) return true;
+
+  const componentConfig = typeConfig[componentId];
+
+  if (componentConfig === undefined) return true;
+  if (componentConfig === false) return null;
+  if (componentConfig === true) return true;
+
+  return componentConfig;
+};
+
+/**
+ * Whether a component should be imported (not excluded by config).
+ */
+export const shouldImportComponent = (
+  config: AppConfig,
+  componentType: string,
+  componentId: string
+): boolean => {
+  return getComponentImportConfig(config, componentType, componentId) !== null;
+};
+
+/**
+ * Extract a HubDB mapping from the resolved import config, if present.
+ */
+export const getHubdbMapping = (
+  config: AppConfig,
+  componentType: string,
+  componentId: string
+): HubdbMapping | null => {
+  const importCfg = getComponentImportConfig(config, componentType, componentId);
+  if (importCfg === null || importCfg === true) return null;
+  if (importCfg.type === "hubdb" && importCfg.target_property && importCfg.mapping_type) {
+    return {
+      target_property: importCfg.target_property,
+      mapping_type: importCfg.mapping_type,
+    };
+  }
+  return null;
+};
 
 const defaultConfig: AppConfig = {
   version: "0.1.0",

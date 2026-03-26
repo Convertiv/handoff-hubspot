@@ -2,16 +2,13 @@ import { describe, expect, it } from "vitest";
 import transpile from "../src/transpile.js";
 import { buildFields } from "../src/fields/fields.js";
 import { processHubdbMappings } from "../src/fields/hubdb.js";
+import { HubdbMapping } from "../src/config/command.js";
 
 describe("HubDB Integration Mappings", () => {
   it("Should correctly append generic hubdb fields to component JSON when target match occurs", () => {
-    const mockConfig: any = {
-      hubdb_mappings: {
-        "test_component": {
-          target_property: "chart_data",
-          mapping_type: "multi_series",
-        },
-      },
+    const mapping: HubdbMapping = {
+      target_property: "chart_data",
+      mapping_type: "multi_series",
     };
 
     const componentProperties: any = {
@@ -24,7 +21,7 @@ describe("HubDB Integration Mappings", () => {
     };
 
     const baseFields = buildFields(componentProperties);
-    const results = processHubdbMappings(baseFields, mockConfig, "test_component");
+    const results = processHubdbMappings(baseFields, mapping);
 
     expect(results.length).toBe(3);
     expect(results[0].name).toBe("source");
@@ -41,21 +38,16 @@ describe("HubDB Integration Mappings", () => {
     <div id="chart" data-opts='{{#if properties.chart_data}}{{properties.chart_data}}{{else}}{}{{/if}}'></div>
     `;
 
-    const mockConfig: any = {
-      hubdb_mappings: {
-        "test_xy": {
-          target_property: "chart_data",
-          mapping_type: "xy",
-        },
-      },
+    const mapping: HubdbMapping = {
+      target_property: "chart_data",
+      mapping_type: "xy",
     };
 
-    const transpiled = transpile(handlebars, {}, mockConfig, "test_xy");
+    const transpiled = transpile(handlebars, {}, mapping);
 
     expect(transpiled).toContain("{% if component_data %}");
     expect(transpiled).toContain("{{ component_data }}");
 
-    // Expect the appended setup block
     expect(transpiled).toContain("{% set component_data = module.chart_data %}");
     expect(transpiled).toContain("hubdb_table_rows(module.query_configs.hubdb_table");
     expect(transpiled).toContain(`"y": row[y_id]`);
@@ -66,20 +58,15 @@ describe("HubDB Integration Mappings", () => {
     <script>const data = {{#if properties.chart_data}}{{properties.chart_data}}{{else}}{}{{/if}};</script>
     `;
 
-    const mockConfig: any = {
-      hubdb_mappings: {
-        "test_multi": {
-          target_property: "chart_data",
-          mapping_type: "multi_series",
-        },
-      },
+    const mapping: HubdbMapping = {
+      target_property: "chart_data",
+      mapping_type: "multi_series",
     };
 
-    const transpiled = transpile(handlebars, {}, mockConfig, "test_multi");
+    const transpiled = transpile(handlebars, {}, mapping);
 
     expect(transpiled).toContain("const data = {% if component_data %}");    expect(transpiled).toContain("{{ component_data }}");
     
-    // Check for Multi-series generation logic mapped over y_series iterators
     expect(transpiled).toContain("{% for series_cfg in module.query_configs.y_series %}");
     expect(transpiled).toContain(`series_list.append({ "name": series_cfg.series_name, "data": ser_data, "colorKey": series_cfg.color })`);
   });

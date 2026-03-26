@@ -5,6 +5,7 @@ import {
   PropertyDefinition,
 } from "../fields/types.js";
 import { fetchComponent, fetchComponentList } from "../index.js";
+import { readConfig, shouldImportComponent } from "../config/command.js";
 type Severity = "error" | "warning";
 export interface FieldValidation {
   message: string;
@@ -502,10 +503,14 @@ const validateComponent = async (id: string) => {
 };
 
 export const validateAll = async () => {
+  const config = readConfig();
   const data = await fetchComponentList();
   let errorCount = 0;
   for (let component of data) {
-    // validate the component
+    if (!shouldImportComponent(config, component.type, component.id)) {
+      console.log(chalk.gray(`\nSkipping ${component.id} (excluded by config)`));
+      continue;
+    }
     console.log(chalk.blue(`\nValidating ${component.id} (${component.title})`));
     const full = await fetchComponent(component.id);
     const latest = full;

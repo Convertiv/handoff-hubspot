@@ -1,22 +1,18 @@
-import { AppConfig } from "../config/command.js";
+import { HubdbMapping } from "../config/command.js";
 
 /**
  * Mutates the base fields array to inject HubDB mapping specific fields
- * if the component is defined in handoff.config.json
+ * when a resolved HubDB mapping is provided.
  */
 export const processHubdbMappings = (
   fields: any[],
-  config: AppConfig,
-  componentId: string
+  hubdbMapping?: HubdbMapping | null,
 ) => {
-  if (!config.hubdb_mappings || !config.hubdb_mappings[componentId]) {
+  if (!hubdbMapping) {
     return fields;
   }
 
-  const mapping = config.hubdb_mappings[componentId];
-  if (!mapping.target_property || !mapping.mapping_type) {
-    return fields;
-  }
+  const mapping = hubdbMapping;
 
   const targetName = mapping.target_property;
   // Make sure the target property exists in the fields

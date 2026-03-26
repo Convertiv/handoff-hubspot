@@ -1,6 +1,6 @@
 import Handlebars from "handlebars";
 import { PropertyDefinition } from "./fields/types.js";
-import { AppConfig } from "./config/command.js";
+import { HubdbMapping } from "./config/command.js";
 import { v4 as uuidv4 } from "uuid";
 import chalk from "chalk";
 import { TranspileContext } from "./context.js";
@@ -510,15 +510,14 @@ export const handleProgram = (
 const transpile = (
   code: string,
   props?: { [key: string]: PropertyDefinition },
-  config?: AppConfig,
-  componentId?: string
+  hubdbMapping?: HubdbMapping | null,
 ): string => {
-  const ctx = new TranspileContext(props || {}, config, componentId);
+  const ctx = new TranspileContext(props || {}, hubdbMapping);
   const parsed = Handlebars.parse(code);
   let output = handleProgram(parsed, ctx);
 
-  if (ctx.config && ctx.componentId && ctx.config.hubdb_mappings && ctx.config.hubdb_mappings[ctx.componentId]) {
-      const mapping = ctx.config.hubdb_mappings[ctx.componentId];
+  if (ctx.hubdbTargetProperty && ctx.hubdbMappingType) {
+      const mapping = { target_property: ctx.hubdbTargetProperty, mapping_type: ctx.hubdbMappingType };
       if (mapping.mapping_type === "xy") {
       let xKey = "x";
       let yKey = "y";
