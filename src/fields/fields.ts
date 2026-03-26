@@ -1,21 +1,21 @@
-import { buildBooleanField } from "./boolean";
-import buildButtonField, { buildButtonLabelField } from "./button";
-import { buildBaseGroupField } from "./generic";
-import buildImageField, { buildIconField } from "./image";
-import { buildMenuField } from "./menu";
-import { buildObjectGroupField } from "./object";
-import buildSelectField from "./select";
+import { buildBooleanField } from "./boolean.js";
+import buildButtonField, { buildButtonLabelField } from "./button.js";
+import { buildBaseGroupField } from "./generic.js";
+import buildImageField, { buildIconField } from "./image.js";
+import { buildMenuField } from "./menu.js";
+import { buildObjectGroupField } from "./object.js";
+import buildSelectField from "./select.js";
 import buildPlainTextField, {
   buildLinkTextField,
   buildNumberField,
   buildRichTextField,
-} from "./text";
-import buildUrlField from "./url";
+} from "./text.js";
+import buildUrlField from "./url.js";
 import buildVideoFileField, {
   buildVideoEmbedField,
   buildVideoPosterField,
   buildVideoTitleField,
-} from "./video";
+} from "./video.js";
 
 /**
  * Build fields from properties

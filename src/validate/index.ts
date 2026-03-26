@@ -3,9 +3,8 @@ import {
   HandoffComponent,
   FieldTypes,
   PropertyDefinition,
-} from "../fields/types";
-import { fetchComponent, fetchComponentList } from "..";
-
+} from "../fields/types.js";
+import { fetchComponent, fetchComponentList } from "../index.js";
 type Severity = "error" | "warning";
 export interface FieldValidation {
   message: string;

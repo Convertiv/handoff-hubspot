@@ -1,38 +1,13 @@
 import Handlebars from "handlebars";
-import { PropertyDefinition } from "./fields/types";
+import { PropertyDefinition } from "./fields/types.js";
+import { AppConfig } from "./config/command.js";
 import { v4 as uuidv4 } from "uuid";
 import chalk from "chalk";
-// Iterator holds the chain of each statements, as we go deeper into the tre
-const iterator: string[] = [];
-let properties: { [key: string]: PropertyDefinition } = {};
-let chain: PropertyDefinition[] = [];
-let currentProperty: PropertyDefinition | null = null;
-let lastCurrentProperty: PropertyDefinition | null = null;
-let field;
-let inMenuContext;
+import { TranspileContext } from "./context.js";
 
-/**
- * Transpile handlebars code to hubspot code
- * @param code string
- * @returns string
- */
-const transpile: (
-  code: string,
-  props?: { [key: string]: PropertyDefinition }
-) => string = (code, props) => {
-  // reset the iterator and chain
-  iterator.length = 0;
-  chain.length = 0;
-  currentProperty = null;
-  lastCurrentProperty = null;
-  inMenuContext = undefined;
-  field = undefined;
-  const parsed = Handlebars.parse(code);
-  if (props) properties = props;
-  return program(parsed);
-};
+// ─── Search Meta Template ─────────────────────────────────────────────────────
 
-const buildSearchMeta = (property: PropertyDefinition) => {
+const buildSearchMeta = (_property: PropertyDefinition): string => {
   return `{% set search_page = module.results.use_custom_search_results_template is truthy and module.results.path_id ? content_by_id(module.results.path_id).absolute_url : site_settings.content_search_results_page_path %}
 
 {% unless (search_page is string_containing "//") %}
@@ -69,392 +44,123 @@ const buildSearchMeta = (property: PropertyDefinition) => {
 ] %}`;
 };
 
-const searchForField = (variableList: string[]) => {
-  let searchSpace:
-      | {
-          [key: string]: PropertyDefinition;
-        }
-      | PropertyDefinition = properties,
-    foundProperty: PropertyDefinition | undefined;
-  // Check if the variable is a property
-  // Find the property in the properties object
-  for (let i = 0; i < variableList.length; i++) {
-    let part = variableList[i];
+// ─── Expression Handling ──────────────────────────────────────────────────────
 
-    if (part === "properties") {
-      searchSpace = properties;
-      continue;
-    }
-    if (part === "this") {
-      searchSpace = chain[chain.length - 1];
-      continue;
-    }
-    if (searchSpace) {
-      if (searchSpace[part]) {
-        searchSpace = searchSpace[part];
-      } else if (searchSpace.type === "array") {
-        searchSpace = searchSpace.items.properties[part];
-      } else if (searchSpace.type === "object") {
-        searchSpace = searchSpace.properties[part];
-      } else {
-        searchSpace = searchSpace;
-      }
-    }
-  }
-  foundProperty = searchSpace as PropertyDefinition;
-  return foundProperty;
-};
-
-const expression = (node) => {
-  // Get the path expression
-  let path = node.path.original;
-  switch (path) {
-    case "eq":
-      // lets check to see if the first param is a loop index, and adjust the second param accordingly
-      
-      if (node.params[0].type === "PathExpression" && node.params[0].original === "@index" && node.params[1].type === "NumberLiteral") {
-        // Hubspot indexes start at 1, so we need to adjust the second param accordingly
-        node.params[1].original = Number(node.params[1].original) + 1;
-      }
-      let statement = `${translateExpression(node.params[0])} == ${translateExpression(node.params[1])}`;
-      return statement;
-    default:
-      return path;
-  }
-};
-
-const translateExpression = (param) => {
+const translateExpression = (param: any, ctx: TranspileContext): string => {
   if (param.type === "PathExpression") {
-    param = param.original;
-    param = param.replace("properties.", "module.");
-    param = param.replace("this.", `${iterator[iterator.length - 1]}.`);
-    if (param === "@index") {
-      return `loop.index`;
+    let value = param.original as string;
+
+    if (ctx.hubdbTargetProperty) {
+      if (value === `properties.${ctx.hubdbTargetProperty}` || value === `../properties.${ctx.hubdbTargetProperty}`) {
+         return "component_data";
+      }
     }
-    return param;
+
+    value = value.replace("properties.", "module.");
+    const iter = ctx.currentIterator();
+    if (iter) {
+      value = value.replace("this.", `${iter}.`);
+    }
+    if (value === "@index") {
+      return "loop.index";
+    }
+    return value;
   } else if (param.type === "StringLiteral") {
     return `'${param.original}'`;
   } else if (param.type === "NumberLiteral") {
     return param.original;
   }
+  return "";
 };
 
-/**
- * Transpile handlebars block to hubspot block
- * @param node
- * @returns
- */
-const block = (node) => {
-  // Hoping this is a simple statement
-  if (!node.params || node.params.length === 0) {
-    console.log("Warning - there is a parameter with no value");
-    return "";
-  }
-  // We know there is a parameter, lets get the first one
-  let param = node.params[0];
-  let value = "",
-    expressionValue = "",
-    isExpression = false;
-  if (!param.original && param.type === "SubExpression") {
-    // this is an expression, we need to evaluate it
-    value = expression(param);
-    expressionValue = value;
-    isExpression = true;
-  } else {
-    value = param.original;
-  }
-
-  // If we're looking up to the top of the tree, we need to replace the ../properties. with properties.
-  // TODO: handle recursion for this
-  if (value.includes("../properties.")) {
-    value = value.replace("../properties.", "properties.");
-  }
-  const variableList: string[] = value.split(".");
-
-  let variable = variableList[variableList.length - 1];
-  let returnValue;
-  let target = "module";
-  switch (node.path.original) {
-    case "field":
-      let parentTarget = "module";
-      if (iterator.length > 0) {
-        parentTarget = iterator[iterator.length - 1];
-      }
-      let formatValue = `{# field ${node.params[0].original}`;
-      // figure out if what the field type is
-      // get the parent
-      let first = variableList[0];
-
-      let parentProperty = searchForField(variableList);
-
-      if (parentProperty) {
-        formatValue += ` type="${parentProperty.type}"  #}`;
-        if (parentProperty.type === "menu") {
-          variable = variableList
-            // Trim off the front if we're dropping an interator in
-            .slice(iterator.length)
-            .filter((variable) => variable !== null)
-            .join(".");
-          let context = `menu_${uuidv4().substring(1, 6)}`;
-          formatValue += `\n{% set ${context} = menu(${parentTarget}.${variable}) %}`;
-          inMenuContext = context;
-        }
-        if (parentProperty.type === "search") {
-          formatValue += buildSearchMeta(parentProperty);
-        }
-      } else {
-        console.log(chalk.yellow(`Unknown field type: ${first}`));
-        formatValue += ` type="unknown"  #}`;
-      }
-
-      returnValue = `${formatValue}\n${program(node.program)}{# end field #}`;
-      break;
-    case "if":
-    case "unless":
-      
-      let findProperty = findParent(variableList);
-      // ask if the variable is a property
-      if (findProperty) {
-        if (findProperty.type === "link") {
-          variableList[variableList.length - 2] = `${findProperty.id}_url`;
-          variableList[variableList.length - 1] = "href";
-        } else if (findProperty.type === "video_embed") {
-          if (variable === "poster") {
-            variableList[variableList.length - 1] = `${findProperty.id}_poster`;
-          } else {
-            //variableList[variableList.length - 1] = `${findProperty.id}_url`;
-          }
-        } else if (
-          findProperty.type === "button" ||
-          findProperty.type === "breadcrumb"
-        ) {
-          // We're checking to see if a button href is set
-          if (findProperty.id !== variable) {
-            variableList[variableList.length - 2] =
-              `${findProperty.id}_${variable}`;
-            variableList[variableList.length - 1] = "href";
-          } else {
-            variableList[variableList.length - 1] = `${findProperty.id}_url`;
-            variableList.push("href");
-          }
-        } else if (findProperty.type === "url") {
-          variableList[variableList.length - 1] = `${findProperty.id}.href`;
-        }
-      }
-
-      // Special handling for button/link target attribute
-      if ((findProperty?.type === "button" || findProperty?.type === "link") && variable === "target") {
-        // Find the property key from the properties object
-        const propertyKey = Object.keys(properties).find(key => properties[key] === findProperty);
-        const elementId = propertyKey || (findProperty.type === "button" ? "button" : "link");
-        // Use the current context (loop variable if in a loop, otherwise module)
-        const context = iterator.length > 0 ? iterator[iterator.length - 1] : target;
-        let statement = `${context}.${elementId}_url.type == 'EXTERNAL'`;
-        if (isExpression) {
-          statement = value;
-        }
-        returnValue = `{% if ${statement} %} target="_blank"`;
-        if (node.inverse) {
-          returnValue += `{% else %} ${program(node.inverse)} {% endif %}`;
-        } else {
-          returnValue += ` {% endif %}`;
-        }
-        currentProperty = lastCurrentProperty;
-        break;
-      }
-
+const handleExpression = (node: any, ctx: TranspileContext): string => {
+  const path = node.path.original;
+  switch (path) {
+    case "eq":
+      // Adjust 0-based @index to HubSpot's 1-based loop.index
       if (
-        variableList[0] === "@first" ||
-        variableList[0] === "@last" ||
-        variableList[0] === "@index" ||
-        variableList[0] === "@length"
+        node.params[0].type === "PathExpression" &&
+        node.params[0].original === "@index" &&
+        node.params[1].type === "NumberLiteral"
       ) {
-        variable = variableList[0];
-      } else {
-        variable = variableList
-          .slice(1)
-          .filter((variable) => variable !== null)
-          .join(".");
-        if (iterator.length > 0) {
-          if (variableList[0] === "properties") {
-            target = "module";
-          } else {
-            target = iterator[iterator.length - 1];
-          }
-        }
+        node.params[1].original = Number(node.params[1].original) + 1;
       }
-
-      // check to see if the block has an else block
-      let statement = `${target}.${variable}`;
-      if (isExpression) {
-        statement = value;
-      }
-
-      if (variable === "@first") {
-        statement = "loop.first";
-      } else if (variable === "@last") {
-        statement = "loop.last";
-      } else if (variable === "@index") {
-        statement = "loop.index";
-      } else if (variable === "@length") {
-        statement = "loop.length";
-      }
-      if(node.path.original === "if") {
-        returnValue = `{% if ${statement} %} ${program(node.program)}`;
-        if (node.inverse) {
-          returnValue += `{% else %} ${program(node.inverse)} {% endif %}`;
-        } else {
-          returnValue += ` {% endif %}`;
-        }
-      } else {
-        returnValue = `{% unless ${statement} %} ${program(node.program)} {% endunless %}`;
-      }
-      currentProperty = lastCurrentProperty;
-      break;
-    case "each":
-      let searchSpace = searchForField(variableList);
-      if (searchSpace) {
-        currentProperty = searchSpace;
-        chain.push(currentProperty);
-        field = variable;
-      }
-      // check if the variable is a property
-      const current = variable[0];
-      let loop_target = "module";
-      if (iterator.length > 0) {
-        loop_target = iterator[iterator.length - 1];
-      }
-      variable = variableList
-        .slice(1)
-        .filter((variable) => variable !== null)
-        .join(".");
-      iterator.push(`item_${current}`);
-      if (inMenuContext) {
-        returnValue = `{% for item_${current} in ${inMenuContext}.children %} `;
-        // ENsure that menu context is destroyed so it doesn't polute down the tree
-        inMenuContext = undefined;
-        returnValue += `${program(node.program)} {% endfor %}`;
-      } else {
-        returnValue = `{% for item_${current} in ${loop_target}.${variable} %} ${program(node.program)} {% endfor %}`;
-      }
-      if (currentProperty) {
-        currentProperty = chain[chain.length - 1];
-        field = undefined;
-      }
-
-      chain.pop();
-      iterator.pop();
-      break;
-  }
-  if (!returnValue)
-    throw new Error(`Unknown block type: '${node.path.original}'`);
-  return returnValue;
-};
-
-// Metadata builder
-const metadata = (part: string) => {
-  // lets see what current property we're looking at
-  if (currentProperty) {
-    // TODO: add more metadata properties
+      return `${translateExpression(node.params[0], ctx)} == ${translateExpression(node.params[1], ctx)}`;
+    default:
+      return path;
   }
 };
 
-const findPart = (part: string, parent: PropertyDefinition | undefined) => {
-  let current;
-  if (parent) {
-    if (parent.type === "object" || parent.type === "array") {
-      if (parent.properties) {
-        current = parent.properties[part];
-      } else if (parent.items?.properties) {
-        current = parent.items.properties[part];
-      }
-    } else if (
-      parent.type === "link" ||
-      parent.type === "button" ||
-      parent.type === "breadcrumb" ||
-      parent.type === "image"
-    ) {
-      current = parent;
-    } else if (parent.type === "video_embed") {
-    } else {
-      current = properties[part];
+// ─── Mustache Handler ─────────────────────────────────────────────────────────
+
+const handleMustache = (node: any, ctx: TranspileContext): string => {
+  if (node.path.original === 'json' && node.params && node.params.length > 0) {
+    const fakeNode = {
+      type: 'MustacheStatement',
+      path: node.params[0]
+    };
+    const innerValue = handleMustache(fakeNode, ctx);
+    const match = innerValue.match(/^\{\{\s*(.*?)\s*\}\}$/);
+    if (match) {
+      return `{{ ${match[1]}|tojson }}`;
     }
-  } else {
-    current = properties[part];
+    return `{{ ${innerValue}|tojson }}`;
   }
-  return current;
-};
 
-const findParent = (parts: string[], debug?: boolean) => {
-  let parent;
-  lastCurrentProperty = currentProperty;
-  for (let part of parts) {
-    if (part === "properties") {
-      parent = properties;
-    } else if (part === "this") {
-      parent = currentProperty;
-    } else {
-      parent = findPart(part, parent);
-    }
-    if (debug) console.log(parent);
-  }
-  return parent;
-};
-
-const mustache = (node) => {
-  // check if the value is a variable or a string
-  // @ts-ignore
-  let value = node.path.original,
-    property: PropertyDefinition | undefined = undefined,
-    parentProperty: PropertyDefinition | undefined = undefined,
-    searchSpace:
-      | {
-          [key: string]: PropertyDefinition;
-        }
-      | PropertyDefinition = properties;
+  let value = node.path.original as string;
+  let property: PropertyDefinition | undefined;
+  let parentProperty: PropertyDefinition | undefined;
+  let searchSpace:
+    | { [key: string]: PropertyDefinition }
+    | PropertyDefinition = ctx.properties;
 
   if (value === "this") {
-    value = `${iterator[iterator.length - 1]}.${field}`;
+    const iter = ctx.currentIterator();
+    value = `${iter}.${ctx.field}`;
   } else if (value === "search_page") {
     value = "search_page";
   } else if (value === "@index") {
-    value = `loop.index`;
+    value = "loop.index";
   } else {
     if (value.includes("../properties.")) {
       value = value.replace("../properties.", "properties.");
     }
-    const valueParts = value.split(".");
-    for (let part of valueParts) {
-      // the field name can not be = label
+
+    if (ctx.hubdbTargetProperty && value === `properties.${ctx.hubdbTargetProperty}`) {
+        value = "component_data";
+        searchSpace = ctx.properties;
+    } else {
+      const valueParts = value.split(".");
+      for (const part of valueParts) {
       if (part === "this") {
-        // We're in a loop, so current prop is already set to the thing we're looping over
-        value = iterator[iterator.length - 1]; // get the last item in the iterator
-        searchSpace = chain[chain.length - 1];
+        const iter = ctx.currentIterator();
+        value = iter!;
+        searchSpace = ctx.currentChain()!;
       } else if (part === "properties") {
         value = "module";
-        searchSpace = properties;
+        searchSpace = ctx.properties;
       } else {
         parentProperty = searchSpace as PropertyDefinition;
         if (searchSpace) {
           if (searchSpace[part]) {
             searchSpace = searchSpace[part];
-          } else if (searchSpace.type === "array") {
-            searchSpace = searchSpace.items.properties[part];
-          } else if (searchSpace.type === "object") {
-            searchSpace = searchSpace.properties[part];
-          } else {
-            searchSpace = searchSpace;
+          } else if ((searchSpace as PropertyDefinition).type === "array") {
+            searchSpace = (searchSpace as PropertyDefinition).items?.properties?.[part];
+          } else if ((searchSpace as PropertyDefinition).type === "object") {
+            searchSpace = (searchSpace as PropertyDefinition).properties?.[part];
           }
+          // else: keep current searchSpace
         }
         property = searchSpace as PropertyDefinition;
+
         if (value === "metadata") {
-          // This is a special case where we're looking for a property on the metadata object
-          value = metadata(part);
+          // metadata() was a no-op in the old code; skip it
+          value += `.${part}`;
         } else {
           if (parentProperty) {
-            field = part;
+            ctx.field = part;
           }
-          
+
           if (!property) {
             value += `.${part}`;
           } else if (
@@ -463,20 +169,21 @@ const mustache = (node) => {
             parentProperty.type === "breadcrumb"
           ) {
             if (part === "label" || part === "text") {
-              value += `_text`;
+              value += "_text";
             } else if (part === "href" || part === "url") {
-              value += `_url.href|escape_attr`;
+              value += "_url.href|escape_attr";
             } else if (part === "rel") {
-              value += `.rel|escape_attr`;
+              value += ".rel|escape_attr";
             }
           } else if (property.type === "url") {
             value += `.${part}.href|escape_attr`;
           } else if (parentProperty.type === "video_embed") {
             if (part === "poster") {
-              value += `_poster`;
+              value += "_poster";
             } else if (part === "url") {
+              // video_embed url is handled by the embed field itself; skip
             } else if (part === "title") {
-              value += `_title`;
+              value += "_title";
             } else {
               value += `.${part}`;
             }
@@ -484,7 +191,7 @@ const mustache = (node) => {
             value += `.${part}`;
           } else {
             if (part === "label") {
-              value += `.field_label`;
+              value += ".field_label";
             } else {
               value += `.${part}`;
             }
@@ -492,27 +199,287 @@ const mustache = (node) => {
         }
       }
     }
+    }
     property = null;
   }
 
   return `{{ ${value} }}`;
 };
 
-/**
- * Transpile handlebars program to hubspot code
- * @param program hbs.AST.Program
- * @returns string
- */
-export const program: (program: hbs.AST.Program) => string = (program) => {
-  const buffer = [];
-  for (let node of program.body) {
+// ─── Block Handler ────────────────────────────────────────────────────────────
+
+const handleBlock = (node: any, ctx: TranspileContext): string => {
+  if (!node.params || node.params.length === 0) {
+    console.log("Warning - there is a parameter with no value");
+    return "";
+  }
+
+  let param = node.params[0];
+  let value = "";
+  let expressionValue = "";
+  let isExpression = false;
+
+  if (!param.original && param.type === "SubExpression") {
+    value = handleExpression(param, ctx);
+    expressionValue = value;
+    isExpression = true;
+  } else {
+    value = param.original;
+  }
+
+  // Flatten parent scope references
+  if (value.includes("../properties.")) {
+    value = value.replace("../properties.", "properties.");
+  }
+
+  const variableList: string[] = value.split(".");
+  let variable = variableList[variableList.length - 1];
+
+  switch (node.path.original) {
+    case "field":
+      return handleFieldBlock(node, variableList, variable, ctx);
+
+    case "if":
+    case "unless":
+      return handleIfUnless(
+        node, variableList, variable, value, isExpression, ctx
+      );
+
+    case "each":
+      return handleEach(node, variableList, variable, ctx);
+
+    default:
+      throw new Error(`Unknown block type: '${node.path.original}'`);
+  }
+};
+
+// ─── Field Block ──────────────────────────────────────────────────────────────
+
+const handleFieldBlock = (
+  node: any,
+  variableList: string[],
+  variable: string,
+  ctx: TranspileContext
+): string => {
+  let parentTarget = "module";
+  const iter = ctx.currentIterator();
+  if (iter) {
+    parentTarget = iter;
+  }
+
+  let formatValue = `{# field ${node.params[0].original}`;
+  const parentProperty = ctx.searchForField(variableList);
+
+  if (parentProperty) {
+    formatValue += ` type="${parentProperty.type}"  #}`;
+    if (parentProperty.type === "menu") {
+      const menuVariable = variableList
+        .slice(ctx.iteratorDepth)
+        .filter((v) => v !== null)
+        .join(".");
+      const context = `menu_${uuidv4().substring(1, 6)}`;
+      formatValue += `\n{% set ${context} = menu(${parentTarget}.${menuVariable}) %}`;
+      ctx.menuContext = context;
+    }
+    if (parentProperty.type === "search") {
+      formatValue += buildSearchMeta(parentProperty);
+    }
+  } else {
+    console.log(chalk.yellow(`Unknown field type: ${variableList[0]}`));
+    formatValue += ` type="unknown"  #}`;
+  }
+
+  return `${formatValue}\n${handleProgram(node.program, ctx)}{# end field #}`;
+};
+
+// ─── If / Unless Block ────────────────────────────────────────────────────────
+
+const handleIfUnless = (
+  node: any,
+  variableList: string[],
+  variable: string,
+  value: string,
+  isExpression: boolean,
+  ctx: TranspileContext
+): string => {
+  const findProperty = ctx.findParent(variableList);
+  let returnValue: string;
+  let target = "module";
+
+  // Rewrite paths based on property type
+  if (findProperty) {
+    if (findProperty.type === "link") {
+      variableList[variableList.length - 2] = `${findProperty.id}_url`;
+      variableList[variableList.length - 1] = "href";
+    } else if (findProperty.type === "video_embed") {
+      if (variable === "poster") {
+        variableList[variableList.length - 1] = `${findProperty.id}_poster`;
+      }
+    } else if (
+      findProperty.type === "button" ||
+      findProperty.type === "breadcrumb"
+    ) {
+      if (findProperty.id !== variable) {
+        variableList[variableList.length - 2] =
+          `${findProperty.id}_${variable}`;
+        variableList[variableList.length - 1] = "href";
+      } else {
+        variableList[variableList.length - 1] = `${findProperty.id}_url`;
+        variableList.push("href");
+      }
+    } else if (findProperty.type === "url") {
+      variableList[variableList.length - 1] = `${findProperty.id}.href`;
+    }
+  }
+
+  // Special handling for button/link target attribute
+  if (
+    (findProperty?.type === "button" || findProperty?.type === "link") &&
+    variable === "target"
+  ) {
+    const propertyKey = Object.keys(ctx.properties).find(
+      (key) => ctx.properties[key] === findProperty
+    );
+    const elementId =
+      propertyKey || (findProperty.type === "button" ? "button" : "link");
+    const iter = ctx.currentIterator();
+    const context = iter || target;
+    let statement = `${context}.${elementId}_url.type == 'EXTERNAL'`;
+    if (isExpression) {
+      statement = value;
+    }
+    returnValue = `{% if ${statement} %} target="_blank"`;
+    if (node.inverse) {
+      returnValue += `{% else %} ${handleProgram(node.inverse, ctx)} {% endif %}`;
+    } else {
+      returnValue += ` {% endif %}`;
+    }
+    ctx.currentProperty = ctx.lastCurrentProperty;
+    return returnValue;
+  }
+
+  // Handle loop metadata variables
+  if (
+    variableList[0] === "@first" ||
+    variableList[0] === "@last" ||
+    variableList[0] === "@index" ||
+    variableList[0] === "@length"
+  ) {
+    variable = variableList[0];
+  } else {
+    variable = variableList
+      .slice(1)
+      .filter((v) => v !== null)
+      .join(".");
+    const iter = ctx.currentIterator();
+    if (iter) {
+      if (variableList[0] === "properties") {
+        target = "module";
+      } else {
+        target = iter;
+      }
+    }
+  }
+
+  // Build the statement
+  let statement = `${target}.${variable}`;
+  if (isExpression) {
+    statement = value;
+  }
+
+  if (!isExpression && ctx.hubdbTargetProperty && value === `properties.${ctx.hubdbTargetProperty}`) {
+    statement = "component_data";
+  }
+
+  if (variable === "@first") {
+    statement = "loop.first";
+  } else if (variable === "@last") {
+    statement = "loop.last";
+  } else if (variable === "@index") {
+    statement = "loop.index";
+  } else if (variable === "@length") {
+    statement = "loop.length";
+  }
+
+  if (node.path.original === "if") {
+    returnValue = `{% if ${statement} %} ${handleProgram(node.program, ctx)}`;
+    if (node.inverse) {
+      returnValue += `{% else %} ${handleProgram(node.inverse, ctx)} {% endif %}`;
+    } else {
+      returnValue += ` {% endif %}`;
+    }
+  } else {
+    returnValue = `{% unless ${statement} %} ${handleProgram(node.program, ctx)} {% endunless %}`;
+  }
+
+  ctx.currentProperty = ctx.lastCurrentProperty;
+  return returnValue;
+};
+
+// ─── Each Block ───────────────────────────────────────────────────────────────
+
+const handleEach = (
+  node: any,
+  variableList: string[],
+  variable: string,
+  ctx: TranspileContext
+): string => {
+  const searchSpace = ctx.searchForField(variableList);
+  if (searchSpace) {
+    ctx.currentProperty = searchSpace;
+    ctx.pushChain(ctx.currentProperty);
+    ctx.field = variable;
+  }
+
+  const current = variable[0];
+  let loopTarget = "module";
+  const iter = ctx.currentIterator();
+  if (iter) {
+    loopTarget = iter;
+  }
+
+  const joinedVariable = variableList
+    .slice(1)
+    .filter((v) => v !== null)
+    .join(".");
+
+  ctx.pushIterator(`item_${current}`);
+
+  let returnValue: string;
+  if (ctx.menuContext) {
+    returnValue = `{% for item_${current} in ${ctx.menuContext}.children %} `;
+    ctx.menuContext = undefined;
+    returnValue += `${handleProgram(node.program, ctx)} {% endfor %}`;
+  } else {
+    returnValue = `{% for item_${current} in ${loopTarget}.${joinedVariable} %} ${handleProgram(node.program, ctx)} {% endfor %}`;
+  }
+
+  if (ctx.currentProperty) {
+    ctx.currentProperty = ctx.currentChain() || null;
+    ctx.field = undefined;
+  }
+
+  ctx.popChain();
+  ctx.popIterator();
+
+  return returnValue;
+};
+
+// ─── Program Handler ──────────────────────────────────────────────────────────
+
+export const handleProgram = (
+  program: hbs.AST.Program,
+  ctx: TranspileContext
+): string => {
+  const buffer: string[] = [];
+  for (const node of program.body) {
     switch (node.type) {
       case "Program":
-        // recursively call the program function
-        // @ts-ignore - we know this is a program, and apparently the AST program type is wonky
-        buffer.push(program(node));
+        // @ts-ignore — Handlebars AST types are sometimes incorrect
+        buffer.push(handleProgram(node, ctx));
+        break; // FIX: was missing break, causing fall-through to MustacheStatement
       case "MustacheStatement":
-        buffer.push(mustache(node));
+        buffer.push(handleMustache(node, ctx));
         break;
       case "TextNode":
         // @ts-ignore
@@ -523,13 +490,140 @@ export const program: (program: hbs.AST.Program) => string = (program) => {
         buffer.push(node.value);
         break;
       case "BlockStatement":
-        buffer.push(block(node));
+        buffer.push(handleBlock(node, ctx));
         break;
       default:
         throw new Error(`Unknown node type`);
     }
   }
   return buffer.join("");
+};
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Transpile Handlebars code to HubSpot HubL code.
+ * @param code - The Handlebars template string
+ * @param props - The component's property definitions
+ * @returns The transpiled HubL string
+ */
+const transpile = (
+  code: string,
+  props?: { [key: string]: PropertyDefinition },
+  config?: AppConfig,
+  componentId?: string
+): string => {
+  const ctx = new TranspileContext(props || {}, config, componentId);
+  const parsed = Handlebars.parse(code);
+  let output = handleProgram(parsed, ctx);
+
+  if (ctx.config && ctx.componentId && ctx.config.hubdb_mappings && ctx.config.hubdb_mappings[ctx.componentId]) {
+      const mapping = ctx.config.hubdb_mappings[ctx.componentId];
+      if (mapping.mapping_type === "xy") {
+      let xKey = "x";
+      let yKey = "y";
+      //@ts-ignore
+      const targetProp = ctx.properties[mapping.target_property];
+      if (targetProp && targetProp.items && targetProp.items.properties) {
+          const keys = Object.keys(targetProp.items.properties);
+          if (keys.length >= 2) {
+              xKey = keys[0];
+              yKey = keys[1];
+          }
+      }
+      output = `{% set component_data = module.${mapping.target_property} %}
+{% if module.source == "query" %}
+  {% set chart_qs = "limit=" ~ module.query_configs.limit %}
+  {% if module.query_configs.sort_column %}
+    {% set dir = module.query_configs.sort_direction == "desc" ? "-" : "" %}
+    {% set chart_qs = chart_qs ~ "&orderBy=" ~ dir ~ module.query_configs.sort_column %}
+  {% endif %}
+  {% set db_rows = hubdb_table_rows(module.query_configs.hubdb_table, chart_qs) %}
+  {% set table_info = hubdb_table(module.query_configs.hubdb_table) %}
+  {% set col_map = {} %}
+  {% for col in table_info.columns %}
+    {% do col_map.put(col.name, col.id|string) %}
+  {% endfor %}
+  {% set x_id = col_map[module.query_configs.x_column] || module.query_configs.x_column %}
+  {% set y_id = col_map[module.query_configs.y_column] || module.query_configs.y_column %}\n  {% if module.query_configs.show_diagnostics %}
+  <div style="background: #f4f6f9; border: 1px solid #cbd6e2; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-family: sans-serif; font-size: 13px; color: #33475b; line-height: 1.5;">
+    <strong style="display: block; margin-bottom: 10px; font-size: 15px;">HubDB Query Diagnostics</strong>
+    <p style="margin: 0 0 10px;"><strong>Table Selected:</strong> {{ module.query_configs.hubdb_table }}</p>
+    <p style="margin: 0 0 5px;"><strong>Available Columns:</strong></p>
+    <ul style="margin: 0; padding-left: 20px;">
+      {% for col in table_info.columns %}
+        <li>{{ col.label }} &mdash; <code>{{ col.name }}</code></li>
+      {% endfor %}
+    </ul>
+    <p style="margin: 10px 0 0; color: #ff7a59;"><em>Note: Turn off "Show Table Diagnostics" in the sidebar before publishing.</em></p>
+  </div>
+  {% endif %}
+
+  {% set ser_data = [] %}
+  {% for row in db_rows %}
+    {% do ser_data.append({ "${xKey}": row[x_id], "${yKey}": row[y_id] }) %}
+  {% endfor %}
+  {% set component_data = ser_data %}
+{% endif %}
+` + output;
+      } else if (mapping.mapping_type === "multi_series") {
+          output = `{% set component_data = module.${mapping.target_property} %}
+{% if module.source == "query" %}
+  {% set chart_qs = "limit=" ~ module.query_configs.limit %}
+  {% if module.query_configs.sort_column %}
+    {% set dir = module.query_configs.sort_direction == "desc" ? "-" : "" %}
+    {% set chart_qs = chart_qs ~ "&orderBy=" ~ dir ~ module.query_configs.sort_column %}
+  {% endif %}
+  {% set db_rows = hubdb_table_rows(module.query_configs.hubdb_table, chart_qs) %}
+  {% set table_info = hubdb_table(module.query_configs.hubdb_table) %}
+  {% set col_map = {} %}
+  {% for col in table_info.columns %}
+    {% do col_map.put(col.name, col.id|string) %}
+  {% endfor %}
+  {% set x_id = col_map[module.query_configs.x_column] || module.query_configs.x_column %}
+  {% if module.query_configs.show_diagnostics %}
+  <div style="background: #f4f6f9; border: 1px solid #cbd6e2; padding: 15px; margin-bottom: 20px; border-radius: 4px; font-family: sans-serif; font-size: 13px; color: #33475b; line-height: 1.5;">
+    <strong style="display: block; margin-bottom: 10px; font-size: 15px;">HubDB Query Diagnostics</strong>
+    <p style="margin: 0 0 10px;"><strong>Table Selected:</strong> {{ module.query_configs.hubdb_table }}</p>
+    <p style="margin: 0 0 5px;"><strong>Available Columns:</strong></p>
+    <ul style="margin: 0; padding-left: 20px;">
+      {% for col in table_info.columns %}
+        <li>{{ col.label }} &mdash; <code>{{ col.name }}</code></li>
+      {% endfor %}
+    </ul>
+    <p style="margin: 10px 0 0; color: #ff7a59;"><em>Note: Turn off "Show Table Diagnostics" in the sidebar before publishing.</em></p>
+  </div>
+  {% endif %}
+  {% set cats = [] %}
+  {% for row in db_rows %}
+    {% do cats.append(row[x_id]) %}
+  {% endfor %}
+
+  {% set series_list = [] %}
+  {% for series_cfg in module.query_configs.y_series %}
+    {% set ser_data = [] %}
+    {% set y_id = col_map[series_cfg.y_column] || series_cfg.y_column %}
+    {% for row in db_rows %}
+      {% do ser_data.append(row[y_id]) %}
+    {% endfor %}
+    {% do series_list.append({ "name": series_cfg.series_name, "data": ser_data, "colorKey": series_cfg.color }) %}
+  {% endfor %}
+  {% set component_data = { "categories": cats, "series": series_list } %}
+{% endif %}
+` + output;
+      }
+  }
+
+  return output;
+};
+
+// Re-export for backward compatibility
+export const program = (prog: hbs.AST.Program): string => {
+  // This is kept for backward compatibility but should not be used directly.
+  // It creates a fresh context with no properties — only useful for tests
+  // that call program() directly.
+  const ctx = new TranspileContext({});
+  return handleProgram(prog, ctx);
 };
 
 export default transpile;

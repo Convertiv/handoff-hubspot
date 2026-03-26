@@ -1,0 +1,15 @@
+{
+  "id": "iframe",
+  "title": "IFrame",
+  "type": "component",
+  "properties": {
+    "src": {
+      "type": "text",
+      "default": "http:",
+      "rules": {},
+      "name": "src",
+      "description": "src description"
+    }
+  },
+  "code": "<iframe>{{properties.src}}</iframe>"
+}

@@ -1,7 +1,7 @@
-import { buildBaseField } from "./generic";
-import buildPlainTextField, { buildRichTextField } from "./text";
-import { PropertyDefinition } from "./types";
-import { ImageValue } from "./types";
+import { buildBaseField } from "./generic.js";
+import buildPlainTextField, { buildRichTextField } from "./text.js";
+import { PropertyDefinition } from "./types.js";
+import { ImageValue } from "./types.js";
 
 const buildImageField = (id: string, property: PropertyDefinition, parentId?: string) => {
   const build = buildBaseField(id, property, parentId);

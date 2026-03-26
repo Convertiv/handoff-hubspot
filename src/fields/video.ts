@@ -1,8 +1,8 @@
-import { buildBaseField, buildBaseGroupField } from "./generic";
-import buildImageField from "./image";
-import buildPlainTextField, { buildRichTextField } from "./text";
-import { PropertyDefinition } from "./types";
-import buildUrlField from "./url";
+import { buildBaseField, buildBaseGroupField } from "./generic.js";
+import buildImageField from "./image.js";
+import buildPlainTextField, { buildRichTextField } from "./text.js";
+import { PropertyDefinition } from "./types.js";
+import buildUrlField from "./url.js";
 
 export const buildVideoFileField = (
   id: string,

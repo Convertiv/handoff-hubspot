@@ -285,6 +285,29 @@ Validate and build every component. Without `--force`, aborts the entire run if 
 | `moduleJS` | `boolean` | `false` | When `true`, writes per-module compiled JS; when `false`, writes a blank stub |
 | `username` | `string` | `""` | HTTP Basic Auth username (optional) |
 | `password` | `string` | `""` | HTTP Basic Auth password (optional) |
+| `componentCSS` | `string[]` | `[]` | Array of component IDs that should have their own CSS files |
+| `componentJS` | `string[]` | `[]` | Array of component IDs that should have their own JS files |
+
+### HubDB Data Mappings
+
+To empower component generic arrays or maps to pull real data securely from HubDB instead of requiring static entries, supply a `hubdb_mappings` mapping on your components:
+
+```json
+{
+  "hubdb_mappings": {
+    "bar_chart": {
+      "target_property": "data",
+      "mapping_type": "xy"
+    },
+    "category_breakdown_chart": {
+      "target_property": "data",
+      "mapping_type": "multi_series"
+    }
+  }
+}
+```
+
+Handoff-HubSpot automatically injects the HubDB HubL lookup configurations directly into the component's output template dynamically overriding standard AST mapping targets when valid query data is returned.\n
 
 ---
 

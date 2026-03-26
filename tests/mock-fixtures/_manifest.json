@@ -1,0 +1,38 @@
+[
+  {
+    "id": "button",
+    "title": "Button"
+  },
+  {
+    "id": "title_simple",
+    "title": "Title Simple"
+  },
+  {
+    "id": "iframe",
+    "title": "IFrame"
+  },
+  {
+    "id": "hero_split",
+    "title": "Hero Split"
+  },
+  {
+    "id": "video",
+    "title": "Video Component"
+  },
+  {
+    "id": "accordion",
+    "title": "Accordion Component"
+  },
+  {
+    "id": "stats",
+    "title": "Stats"
+  },
+  {
+    "id": "menu",
+    "title": "Menu Component"
+  },
+  {
+    "id": "select_comp",
+    "title": "Select Component"
+  }
+]

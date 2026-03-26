@@ -1,12 +1,13 @@
 import chalk from "chalk";
-import { formatErrors, validateAll, validateModule } from "../validate";
-import { fetchComponent, fetchComponentList } from "..";
-import transpile from "../transpile";
+import { formatErrors, validateAll, validateModule } from "../validate/index.js";
+import { fetchComponent, fetchComponentList, fetchComponentJs } from "../index.js";
+import transpile from "../transpile.js";
 import * as prettier from "prettier";
-import { HandoffComponent } from "../fields/types";
-import { readConfig } from "../config/command";
+import { HandoffComponent } from "../fields/types.js";
+import { readConfig } from "../config/command.js";
 import fs from "fs";
-import { buildFields } from "../fields/fields";
+import { buildFields } from "../fields/fields.js";
+import { processHubdbMappings } from "../fields/hubdb.js";
 
 const buildMeta = (component: HandoffComponent) => {
   const config = readConfig();
@@ -142,7 +143,7 @@ const buildModule = async (componentId: string, force: boolean) => {
     }
   }
 
-  const template = transpile(component.code, component.properties);
+  const template = transpile(component.code, component.properties, config, componentId);
   let pretty = template;
   try {
     pretty = await prettier.format(template, {
@@ -155,6 +156,11 @@ const buildModule = async (componentId: string, force: boolean) => {
       e.message
     );
   }
+
+  // Prettier enforces double quotes on html attributes, which breaks JSON payloads formatting inside HubL.
+  // Any attribute string containing |tojson will have its double quotes converted back to single quotes.
+  pretty = pretty.replace(/(\w+(?:-\w+)*)="([^"]*\|tojson[^"]*)"/g, "$1='$2'");
+
   const url = new URL(config.url);
 
   const header = {
@@ -175,7 +181,7 @@ const buildModule = async (componentId: string, force: boolean) => {
     pretty;
   writeToModuleFile(pretty, componentId, `module.html`);
   let css;
-  if (!config.moduleCSS) {
+  if (!config.moduleCSS && (!config.componentCSS || !config.componentCSS.includes(componentId))) {
     css = "/**\n * We are using the core compiled css. This file is blank \n */";
   } else {
     css = component.css;
@@ -183,13 +189,15 @@ const buildModule = async (componentId: string, force: boolean) => {
   writeToModuleFile(css, componentId, `module.css`);
 
   let js;
-  if (!config.moduleJS) {
+  if (!config.moduleJS && (!config.componentJS || !config.componentJS.includes(componentId))) {
     js = "/**\n * We are using the core compiled JS. This file is blank \n */";
   } else {
-    if (!component.jsCompiled) {
+    // attempt to fetch js from the api
+    const jsData = await fetchComponentJs(componentId);
+    if (!jsData) {
       js = "/**\n * This file is blank\n */";
     } else {
-      js = component.jsCompiled;
+      js = jsData;
     }
   }
   writeToModuleFile(js, componentId, `module.js`);
@@ -198,13 +206,18 @@ const buildModule = async (componentId: string, force: boolean) => {
     componentId,
     `meta.json`
   );
+  const baseFields = buildFields(component.properties);
+  const processedFields = processHubdbMappings(baseFields, config, componentId);
+
   writeToModuleFile(
-    JSON.stringify(buildFields(component.properties), null, 2),
+    JSON.stringify(processedFields, null, 2),
     componentId,
     `fields.json`
   );
   return template;
 };
+
+
 
 export const fetchAll = async (force: boolean) => {
   try {

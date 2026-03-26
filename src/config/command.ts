@@ -5,8 +5,8 @@ export interface AppConfig {
   url: string;
   cssPath: string;
   jsPath: string;
-  moduleJS: boolean;
-  moduleCSS: boolean;
+  moduleJS: boolean;  componentJS?: string[];
+  moduleCSS: boolean;  componentCSS?: string[];
   modulesPath: string;
   modulePrefix: string;
   username: string;
@@ -23,10 +23,16 @@ export interface AppConfig {
       };
     };
   };
+  hubdb_mappings?: {
+    [key: string]: {
+      target_property: string;
+      mapping_type: "xy" | "multi_series";
+    };
+  };
 }
 
 const defaultConfig: AppConfig = {
-  version: "0.0.1",
+  version: "0.1.0",
   url: "https://localhost:3000/api/",
   cssPath: "css/uds.css",
   jsPath: "js/uds.js",

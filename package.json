@@ -1,24 +1,29 @@
 {
   "name": "handoff-hubspot",
-  "version": "0.0.52",
+  "version": "0.1.1",
   "description": "A CLI toolchain for fetching handoff components and transpiling them into hubspot modules",
-  "main": "index.js",
+  "type": "module",
+  "main": "dist/index.js",
   "bin": {
     "handoff-hubspot": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "fetch": "node dist/index.js fetch",
+    "fetch:all": "node dist/index.js fetch:all",
+    "fetch:styles": "node dist/index.js styles",
+    "fetch:scripts": "node dist/index.js scripts",
     "start": "http-server ./",
     "publish": "np",
-    "test": "echo \"Error: no test specified\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "cli": "node dist/index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.8.2",
-    "chalk": "^4.0.0",
+    "chalk": "^5.6.2",
     "handlebars": "^4.7.8",
     "http-server": "^14.1.1",
     "prettier": "^3.4.2",
@@ -31,7 +36,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "np": "^10.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
-    "np": "^10.2.0"
+    "vitest": "^4.1.0"
   }
 }

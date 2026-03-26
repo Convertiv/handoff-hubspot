@@ -1,0 +1,35 @@
+{
+  "id": "video",
+  "title": "Video Component",
+  "type": "component",
+  "properties": {
+    "show_header": {
+      "type": "boolean",
+      "default": true,
+      "rules": {},
+      "name": "show_header",
+      "description": "show_header description"
+    },
+    "hide_padding": {
+      "type": "boolean",
+      "default": false,
+      "rules": {},
+      "name": "hide_padding",
+      "description": "hide_padding description"
+    },
+    "video": {
+      "type": "video_embed",
+      "default": {
+        "src": "",
+        "title": "",
+        "poster": {
+          "src": ""
+        }
+      },
+      "rules": {},
+      "name": "video",
+      "description": "video description"
+    }
+  },
+  "code": "\n{{#if properties.show_header}}header{{/if}}\n{{#if properties.hide_padding}}no-pad{{/if}}\n<title>{{properties.video.title}}</title>\n<img src=\"{{properties.video.poster.src}}\" />\n"
+}

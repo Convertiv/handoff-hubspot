@@ -2,16 +2,17 @@
 import axios from "axios";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import { exec } from "child_process";
 
-import { createConfigCommand, readConfig } from "./config/command";
-import { validateAll } from "./validate";
+import { createConfigCommand, readConfig } from "./config/command.js";
+import { validateAll } from "./validate/index.js";
 import {
   HandoffComponentListResponse,
   HandoffComponentResponse,
-} from "./fields/types";
-import validateComponent from "./validate";
+} from "./fields/types.js";
+import validateComponent from "./validate/index.js";
 import chalk from "chalk";
-import buildModule, { fetchAll, writeSharedCss, writeSharedJs } from "./fetch";
+import buildModule, { fetchAll, writeSharedCss, writeSharedJs } from "./fetch/index.js";
 
 const init = async () => {
   const config = readConfig();
@@ -98,6 +99,26 @@ export const fetchComponent: (
 };
 
 /**
+ * Fetch component JS from handoff api
+ * @param componentId
+ * @returns string | null
+ */
+export const fetchComponentJs: (
+  componentId: string
+) => Promise<string | null> = async (componentId: string) => {
+  try {
+    const request = await init();
+    const response = await request.get(`component/${componentId}.js`);
+    if (response.status !== 200) {
+      return null;
+    }
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
  * Fetch component from handoff api
  * @param componentId
  * @returns Object
@@ -125,7 +146,7 @@ const open = (url: string) => {
       : process.platform == "win32"
         ? "start"
         : "xdg-open";
-  require("child_process").exec(start + " " + url);
+  exec(start + " " + url);
 };
 
 const openDocs = async (componentId: string) => {
@@ -172,7 +193,8 @@ const main = async () => {
       command: "styles",
       describe: "Fetch shared styles from handoff",
       handler: async () => {
-        console.log(`-- Fetching shared component css ---\n`);
+        console.log(`-- Fetching shared component css ---
+`);
         fetchSharedStyles();
       },
     })
@@ -180,7 +202,8 @@ const main = async () => {
       command: "scripts",
       describe: "Fetch shared scripts from handoff",
       handler: async () => {
-        console.log(`-- Fetching shared component js ---\n`);
+        console.log(`-- Fetching shared component js ---
+`);
         fetchSharedScripts();
       },
     })
@@ -188,7 +211,8 @@ const main = async () => {
       command: "list",
       describe: "List the components available in handoff",
       handler: async (parsed) => {
-        console.log(`-- List all Components---\n`);
+        console.log(`-- List all Components---
+`);
         await listComponents();
       },
     })
@@ -197,7 +221,8 @@ const main = async () => {
       describe: "Open the documentation page for a component",
 
       handler: async (parsed) => {
-        console.log(`-- Opening component ${parsed.component}---\n`);
+        console.log(`-- Opening component ${parsed.component}---
+`);
         await openDocs(parsed.component);
       },
     })
@@ -213,7 +238,8 @@ const main = async () => {
         });
       },
       handler: async (parsed) => {
-        console.log(`-- Fetching component ${parsed.component}---\n`);
+        console.log(`-- Fetching component ${parsed.component}---
+`);
         await buildModule(parsed.component, parsed.force);
       },
     })

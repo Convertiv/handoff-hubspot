@@ -14,6 +14,7 @@ coverage
 dist
 .node-version
 handoff.config.json
+tests/fixtures/
 
 # Acceptance Tests
 acceptance-tests/my-project
@@ -23,3 +24,4 @@ acceptance-tests/test-output
 
 modules
 css
+example
