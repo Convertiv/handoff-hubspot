@@ -26,10 +26,14 @@ describe("HubDB Integration Mappings", () => {
     const baseFields = buildFields(componentProperties);
     const results = processHubdbMappings(baseFields, mockConfig, "test_component");
 
-    expect(results.length).toBe(2);
-    expect(results[0].name).toBe("query_configs");
-    expect(results[0].children.find((f: any) => f.name === "hubdb_table")?.type).toBe("hubdbtable");
-    expect(results[0].children.find((f: any) => f.name === "y_series")?.type).toBe("group");
+    expect(results.length).toBe(3);
+    expect(results[0].name).toBe("source");
+    expect(results[0].type).toBe("choice");
+    expect(results[1].name).toBe("query_configs");
+    expect(results[1].children.find((f: any) => f.name === "hubdb_table")?.type).toBe("hubdbtable");
+    expect(results[1].children.find((f: any) => f.name === "y_series")?.type).toBe("group");
+    expect(results[2].visibility?.controlling_field_path).toBe("source");
+    expect(results[2].visibility?.controlling_value_regex).toBe("manual");
   });
 
   it("Should transpile AST dynamic targeting property and append HubL macro for XY sources", () => {
