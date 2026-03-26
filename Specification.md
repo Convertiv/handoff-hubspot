@@ -26,7 +26,7 @@ type HandoffComponent = {
   version: string;      // Semver string, e.g. "1.4.2"
   title: string;        // Human-readable name, e.g. "Hero Banner"
   description: string;  // Short description
-  type: FieldType;      // Top-level component type
+  type: ComponentType;  // Top-level component type (see §1.6)
   preview: string;      // URL to a preview image
   group: string;        // Logical grouping, e.g. "Navigation", "Marketing"
   categories: string[]; // HubSpot category slugs (see §2.1)
@@ -69,7 +69,15 @@ breadcrumb | video_file | video_embed | file
 array | object | menu | search | pagination | hubdbtable
 ```
 
-### 1.4 RulesDefinition
+### 1.4 ComponentType
+
+The top-level type of a Handoff component, used for import filtering (§1.7):
+
+```
+element | block | data
+```
+
+### 1.5 RulesDefinition
 
 ```typescript
 interface RulesDefinition {
@@ -92,7 +100,7 @@ interface RulesDefinition {
 }
 ```
 
-### 1.5 Default Value Shapes by Type
+### 1.6 Default Value Shapes by Type
 
 | Type | Expected default shape |
 |------|------------------------|
@@ -109,11 +117,62 @@ interface RulesDefinition {
 | `menu` | any (passed through) |
 | `array`, `object` | omitted or `null` |
 
+### 1.7 Import Configuration
+
+The `import` key on `AppConfig` controls which components are transpiled and how they are built. It consolidates the former `hubdb_mappings`, `componentJS`, and `componentCSS` top-level keys into a single hierarchical structure.
+
+```typescript
+import?: {
+  [componentType: string]: ImportTypeConfig;
+};
+
+type ImportTypeConfig = boolean | {
+  [componentId: string]: boolean | ComponentImportConfig;
+};
+
+interface ComponentImportConfig {
+  type?: "hubdb";
+  target_property?: string;
+  mapping_type?: "xy" | "multi_series";
+  js?: boolean;
+  css?: boolean;
+}
+
+interface HubdbMapping {
+  target_property: string;
+  mapping_type: "xy" | "multi_series";
+}
+```
+
+**Resolution algorithm** (`getComponentImportConfig(config, componentType, componentId)`):
+
+1. If `config.import` is absent → return `true` (import normally).
+2. Look up `config.import[componentType]`:
+   - `undefined` → return `true`.
+   - `false` → return `null` (skip all components of this type).
+   - `true` → return `true`.
+3. Look up `typeConfig[componentId]`:
+   - `undefined` → return `true`.
+   - `false` → return `null` (skip this component).
+   - `true` → return `true`.
+   - `ComponentImportConfig` object → return the object.
+
+**Derived helpers:**
+
+| Helper | Behavior |
+|--------|----------|
+| `shouldImportComponent(config, type, id)` | Returns `false` when the resolved config is `null`; `true` otherwise. Used by `fetchAll` and `validateAll` to skip excluded components. |
+| `getHubdbMapping(config, type, id)` | Returns a `HubdbMapping` when the resolved config has `type === "hubdb"` with valid `target_property` and `mapping_type`; `null` otherwise. Passed directly to the transpiler and field generator. |
+
+**Per-component JS/CSS resolution:**
+
+When the resolved `ComponentImportConfig` has `js: true`, the build writes the component's own JavaScript even if the global `moduleJS` is `false`. The same applies for `css: true` and `moduleCSS`.
+
 ---
 
 ## 2. Validation Specification
 
-Validation runs before transpilation. A component that fails with one or more **errors** will not be built unless the `--force` flag is passed. **Warnings** are surfaced but do not block the build.
+Validation runs before transpilation. Components excluded by the `import` configuration (§1.7) are skipped entirely during `validateAll`. A component that fails with one or more **errors** will not be built unless the `--force` flag is passed. **Warnings** are surfaced but do not block the build.
 
 ### 2.1 Module-Level Validation
 
@@ -454,8 +513,9 @@ Note the `+1` offset applied to numeric literals when the left operand is `@inde
 
 ### 3.12 HubDB Array Mappings
 
-When a component array field is mapped to HubDB via `handoff.config.json` `hubdb_mappings`, the transpiler interrupts standard arrays compilation.
-Instead, it prepends a generic HubDB row-fetching script using HubL dict capabilities to map data columns. The payload Handlebars expressions for `properties.array_name` are then replaced with the dynamically constructed `component_data` HubDB payload rendering variable.
+When a component array field is mapped to HubDB via the `import` configuration (§1.7), the transpiler interrupts standard array compilation. It reads `target_property` and `mapping_type` from the resolved `HubdbMapping` (passed through the `TranspileContext`), prepends a HubDB row-fetching script using HubL dict capabilities to map data columns, and replaces all Handlebars references to `properties.{target_property}` with the dynamically constructed `component_data` variable.
+
+The `TranspileContext` stores both `hubdbTargetProperty` and `hubdbMappingType` from the resolved mapping.
 
 ### 3.13 Post-Processing
 
@@ -697,7 +757,58 @@ Produces a **group** field (no `occurrence`):
 
 Children are built from `property.properties` with `parentId = key`.
 
-### 4.3 Unrecognized Types
+### 4.3 HubDB Source Field Auto-Generation
+
+When a component has a resolved `HubdbMapping` (§1.7), the field generator calls `processHubdbMappings(fields, hubdbMapping)` after `buildFields`. This function mutates the `fields` array in place:
+
+1. **Locate the target field** — finds the field whose `name` matches `mapping.target_property`. If not found, the function returns early.
+
+2. **Inject a `source` choice field** at the target field's index position:
+
+```json
+{
+  "id": "source",
+  "name": "source",
+  "label": "Data Source",
+  "type": "choice",
+  "display": "select",
+  "choices": [["query", "Query Builder"], ["manual", "Manual Data"]],
+  "default": "manual",
+  "help_text": "Choose how data is provided to this module."
+}
+```
+
+3. **Inject a `query_configs` group field** containing the HubDB query builder fields (table selector, column mappings, sort, limit, and diagnostic toggle). This group has a visibility rule showing it only when `source == "query"`:
+
+```json
+{
+  "visibility": {
+    "controlling_field_path": "source",
+    "controlling_value_regex": "query",
+    "operator": "EQUAL"
+  }
+}
+```
+
+The group's children vary by `mapping_type`:
+- **`xy`**: adds a `y_column` text field for the Y-axis column name.
+- **`multi_series`**: adds a `y_series` repeatable group with `series_name`, `y_column`, and `color` fields.
+
+4. **Gate the target array field** — adds a visibility rule to the original target field so it only appears when `source == "manual"`:
+
+```json
+{
+  "visibility": {
+    "controlling_field_path": "source",
+    "controlling_value_regex": "manual",
+    "operator": "EQUAL"
+  }
+}
+```
+
+The final field order at the injection point is: `source` → `query_configs` → original target field.
+
+### 4.4 Unrecognized Types
 
 Types not listed in §4.2 (`breadcrumb`, `video_file` with unknown sub-types, `file`, `search`, `pagination`, `checkbox`) produce no output and are silently dropped from the `fields.json` array.
 
@@ -720,14 +831,15 @@ The module folder name is derived from the component `id` with all non-alphanume
 
 ### 5.3 `module.css`
 
-- When `config.moduleCSS === true`: the raw `component.css` string
-- When `config.moduleCSS === false`: `/** We are using the core compiled css. This file is blank */`
+- When the resolved `ComponentImportConfig` has `css: true`, OR the global `config.moduleCSS === true`: the raw `component.css` string
+- Otherwise: `/** We are using the core compiled css. This file is blank */`
 
 ### 5.4 `module.js`
 
-- When `config.moduleJS === true` and `component.jsCompiled` is set: the compiled JS bundle
-- When `config.moduleJS === true` and `component.jsCompiled` is absent: `/** This file is blank */`
-- When `config.moduleJS === false`: `/** We are using the core compiled JS. This file is blank */`
+- When the resolved `ComponentImportConfig` has `js: true`, OR the global `config.moduleJS === true`:
+  - If `component.jsCompiled` is set: the compiled JS bundle
+  - If `component.jsCompiled` is absent: `/** This file is blank */`
+- Otherwise: `/** We are using the core compiled JS. This file is blank */`
 
 ### 5.5 `meta.json`
 
@@ -755,8 +867,8 @@ When `component.group === "Navigation"`, `global` is set to `true`.
 
 ### 5.6 `fields.json`
 
-A JSON array produced by `buildFields(component.properties)` as specified in §4. Serialized with 2-space indentation.
+A JSON array produced by `buildFields(component.properties)` as specified in §4. When a `HubdbMapping` is resolved for the component, `processHubdbMappings` (§4.3) is applied to inject source selection and query configuration fields. Serialized with 2-space indentation.
 
 ### 5.7 Write Behavior
 
-Files are written asynchronously. If the target `.module` directory does not exist it is created recursively (`fs.mkdirSync(..., { recursive: true })`). Existing files are overwritten without prompting.
+Components excluded by the `import` configuration (§1.7) are skipped entirely during `fetchAll` — no directory or files are created. For included components, files are written asynchronously. If the target `.module` directory does not exist it is created recursively (`fs.mkdirSync(..., { recursive: true })`). Existing files are overwritten without prompting.

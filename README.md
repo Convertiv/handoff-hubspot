@@ -285,29 +285,65 @@ Validate and build every component. Without `--force`, aborts the entire run if 
 | `moduleJS` | `boolean` | `false` | When `true`, writes per-module compiled JS; when `false`, writes a blank stub |
 | `username` | `string` | `""` | HTTP Basic Auth username (optional) |
 | `password` | `string` | `""` | HTTP Basic Auth password (optional) |
-| `componentCSS` | `string[]` | `[]` | Array of component IDs that should have their own CSS files |
-| `componentJS` | `string[]` | `[]` | Array of component IDs that should have their own JS files |
+| `import` | `object` | *(absent)* | Per-component-type import rules (see below) |
 
-### HubDB Data Mappings
+### Import Configuration
 
-To empower component generic arrays or maps to pull real data securely from HubDB instead of requiring static entries, supply a `hubdb_mappings` mapping on your components:
+The `import` key controls which components are transpiled and how. It replaces the previous `hubdb_mappings`, `componentJS`, and `componentCSS` top-level keys.
+
+Each key under `import` corresponds to a Handoff component type (e.g. `"element"`, `"block"`, `"data"`). The value is either a boolean or an object with per-component overrides:
 
 ```json
 {
-  "hubdb_mappings": {
-    "bar_chart": {
-      "target_property": "data",
-      "mapping_type": "xy"
+  "import": {
+    "element": false,
+    "block": {
+      "accordion": false
     },
-    "category_breakdown_chart": {
-      "target_property": "data",
-      "mapping_type": "multi_series"
+    "data": {
+      "bar_chart": {
+        "type": "hubdb",
+        "target_property": "data",
+        "mapping_type": "xy"
+      },
+      "category_breakdown_chart": {
+        "type": "hubdb",
+        "target_property": "data",
+        "mapping_type": "multi_series"
+      }
     }
   }
 }
 ```
 
-Handoff-HubSpot automatically injects the HubDB HubL lookup configurations directly into the component's output template dynamically overriding standard AST mapping targets when valid query data is returned.\n
+**Semantics:**
+
+| Config value | Effect |
+|---|---|
+| `import.{type}: false` | Skip all components of that type |
+| `import.{type}: true` (or key absent) | Import all components of that type normally |
+| `import.{type}: { id: false }` | Import all of that type except those set to `false` |
+| `import.{type}: { id: { type: "hubdb", ... } }` | Import with HubDB data mapping |
+| `import.{type}: { id: { js: true } }` | Per-component JS override (fetches JS even when `moduleJS` is `false`) |
+| `import.{type}: { id: { css: true } }` | Per-component CSS override (fetches CSS even when `moduleCSS` is `false`) |
+
+When `import` is absent entirely, all components are imported normally.
+
+### HubDB Data Mappings
+
+When a component entry under `import` has `"type": "hubdb"`, the build pipeline treats its `target_property` field as a HubDB-powered data source rather than a static array. Two fields are required:
+
+| Key | Description |
+|-----|-------------|
+| `target_property` | The name of the array/object property in the component schema to map (e.g. `"data"`) |
+| `mapping_type` | Either `"xy"` (two-column x/y data) or `"multi_series"` (multiple named series with categories) |
+
+**What happens at build time:**
+
+1. A **Data Source** choice field is auto-generated with two options: "Query Builder" and "Manual Data" (default). This field is always visible in the HubSpot editor and does not depend on any field defined in Handoff.
+2. A **Query Config** field group is injected, visible only when "Query Builder" is selected. It contains fields for table selection, column mapping, sorting, limits, and a diagnostic toggle.
+3. The **target array field** (e.g. `data`) is annotated with a visibility rule so it only appears when "Manual Data" is selected.
+4. The transpiler rewrites all Handlebars references to the target property as `component_data` and prepends HubL code that queries HubDB when in query mode, falling through to the manual array otherwise.
 
 ---
 

@@ -54,7 +54,7 @@ export type HandoffComponent = {
   version: string;
   title: string;
   description: string;
-  type: FieldType;
+  type: ComponentType;
   preview: string;
   group: string;
   categories: string[];

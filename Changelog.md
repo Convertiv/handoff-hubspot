@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-03-26
+
+### Added
+- **Consolidated Import Configuration**: New `import` key in `handoff.config.json` replaces the disparate `hubdb_mappings`, `componentJS`, and `componentCSS` top-level keys. Allows skipping entire component types (`element: false`), excluding individual components (`block: { accordion: false }`), and specifying HubDB mappings or per-component JS/CSS overrides within a unified structure.
+- **Auto-Generated Data Source Selector**: HubDB-mapped array fields now automatically receive a "Data Source" choice field offering "Query Builder" or "Manual Data" options. HubSpot visibility rules dynamically show/hide the query builder fields and manual data interface based on the selection—no manual field definitions required in Handoff.
+- **Component Type Filtering**: `fetchAll` and `validateAll` now respect the `import` config, skipping excluded components before validation or build.
+- **Import Resolution Helpers**: New `getComponentImportConfig`, `shouldImportComponent`, and `getHubdbMapping` functions centralize all config lookups.
+
+### Changed
+- **`processHubdbMappings` Signature**: Now accepts a resolved `HubdbMapping` directly instead of reading from the global config internally.
+- **`TranspileContext` Signature**: Constructor accepts a `HubdbMapping` instead of the full `AppConfig` and component ID.
+- **`transpile()` Signature**: Accepts an optional `HubdbMapping` parameter directly.
+- **`HandoffComponent.type`**: Changed from `FieldType` to `ComponentType` for correct component-level type discrimination.
+
+### Removed
+- **`hubdb_mappings`**: Replaced by `import.{type}.{id}` entries with `type: "hubdb"`.
+- **`componentJS` / `componentCSS`**: Replaced by per-component `js` and `css` booleans inside `import`.
+
 ## [0.2.0] - 2026-03-26
 
 ### Added

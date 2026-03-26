@@ -4,7 +4,7 @@ import { fetchComponent, fetchComponentList, fetchComponentJs } from "../index.j
 import transpile from "../transpile.js";
 import * as prettier from "prettier";
 import { HandoffComponent } from "../fields/types.js";
-import { readConfig } from "../config/command.js";
+import { readConfig, getComponentImportConfig, shouldImportComponent, getHubdbMapping } from "../config/command.js";
 import fs from "fs";
 import { buildFields } from "../fields/fields.js";
 import { processHubdbMappings } from "../fields/hubdb.js";
@@ -143,7 +143,10 @@ const buildModule = async (componentId: string, force: boolean) => {
     }
   }
 
-  const template = transpile(component.code, component.properties, config, componentId);
+  const importCfg = getComponentImportConfig(config, component.type, componentId);
+  const hubdbMapping = getHubdbMapping(config, component.type, componentId);
+
+  const template = transpile(component.code, component.properties, hubdbMapping);
   let pretty = template;
   try {
     pretty = await prettier.format(template, {
@@ -180,16 +183,18 @@ const buildModule = async (componentId: string, force: boolean) => {
     "\n\n" +
     pretty;
   writeToModuleFile(pretty, componentId, `module.html`);
+  const useComponentCSS = config.moduleCSS || (typeof importCfg === "object" && importCfg.css);
   let css;
-  if (!config.moduleCSS && (!config.componentCSS || !config.componentCSS.includes(componentId))) {
+  if (!useComponentCSS) {
     css = "/**\n * We are using the core compiled css. This file is blank \n */";
   } else {
     css = component.css;
   }
   writeToModuleFile(css, componentId, `module.css`);
 
+  const useComponentJS = config.moduleJS || (typeof importCfg === "object" && importCfg.js);
   let js;
-  if (!config.moduleJS && (!config.componentJS || !config.componentJS.includes(componentId))) {
+  if (!useComponentJS) {
     js = "/**\n * We are using the core compiled JS. This file is blank \n */";
   } else {
     // attempt to fetch js from the api
@@ -207,7 +212,7 @@ const buildModule = async (componentId: string, force: boolean) => {
     `meta.json`
   );
   const baseFields = buildFields(component.properties);
-  const processedFields = processHubdbMappings(baseFields, config, componentId);
+  const processedFields = processHubdbMappings(baseFields, hubdbMapping);
 
   writeToModuleFile(
     JSON.stringify(processedFields, null, 2),
@@ -220,6 +225,8 @@ const buildModule = async (componentId: string, force: boolean) => {
 
 
 export const fetchAll = async (force: boolean) => {
+  const config = readConfig();
+
   try {
     await validateAll();
   } catch (e) {
@@ -233,8 +240,11 @@ export const fetchAll = async (force: boolean) => {
 
   const data = await fetchComponentList();
   for (const component of data) {
+    if (!shouldImportComponent(config, component.type, component.id)) {
+      console.log(chalk.gray(`\nSkipping ${component.title} (excluded by config)`));
+      continue;
+    }
     console.log(chalk.blue(`\nBuilding ${component.title}`));
-    // validate the component
     try {
       await buildModule(component.id, force);
     } catch (e) {
