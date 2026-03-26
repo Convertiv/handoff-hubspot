@@ -221,7 +221,7 @@ const buildModule = async (componentId: string, force: boolean) => {
 
 export const fetchAll = async (force: boolean) => {
   try {
-    const valid = validateAll();
+    await validateAll();
   } catch (e) {
     if (force) {
       console.log(chalk.red("Validation failed, but forcing build"));

@@ -181,7 +181,7 @@ const listComponents = async () => {
  * Handle command line arguments
  */
 const main = async () => {
-  const argv = yargs(hideBin(process.argv))
+  await yargs(hideBin(process.argv))
     .command({
       command: "config",
       describe: "Build the handoff config",
@@ -240,7 +240,7 @@ const main = async () => {
       handler: async (parsed) => {
         console.log(`-- Fetching component ${parsed.component}---
 `);
-        await buildModule(parsed.component, parsed.force);
+        await buildModule(parsed.component, !!parsed.force);
       },
     })
     .command({
@@ -256,7 +256,7 @@ const main = async () => {
       describe: "Pull a list of all components and validate them",
       handler: async (parsed) => {
         console.log("Validating all component");
-        validateAll();
+        await validateAll();
       },
     })
     .command({
@@ -271,12 +271,15 @@ const main = async () => {
       },
       handler: async (parsed) => {
         console.log("Validating all component");
-        fetchAll(parsed.force);
+        await fetchAll(!!parsed.force);
       },
     })
 
     .help()
-    .parse();
+    .parseAsync();
 };
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
