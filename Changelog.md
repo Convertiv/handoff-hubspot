@@ -32,6 +32,7 @@ and this project adheres to
 - **Optimized HubL Generation**: Refactored array construction loops to use sequential processing for better reliability in HubSpot's runtime.
 
 ### Fixed
+- **CLI async / `--force`**: `fetch:all --force` and related flows no longer left `validateAll()` floating on an unhandled promise; the CLI now uses `parseAsync()` with a top-level rejection handler, `await validateAll()` where needed, and normalized `--force` for single `fetch`. `validate:all` likewise awaits validation so failures are reported correctly.
 - **JSON Encoding**: Post-processor fix for Prettier's double-quote enforcement, protecting JSON payloads in HTML attributes.
 - **Multi-Series Loops**: Resolved deep parent loop access issues (`loop.parent.loop.first`) when building chart categories.
 - **Helper Evaluation**: Fixed incorrect variable resolution in Handlebars block parameters.
