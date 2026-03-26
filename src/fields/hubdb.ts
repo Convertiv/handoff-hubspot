@@ -156,8 +156,32 @@ export const processHubdbMappings = (
     }
   };
 
-  // Inject our generic group right before the mapped target
+  const sourceField = {
+    id: "source",
+    name: "source",
+    label: "Data Source",
+    type: "choice",
+    display: "select",
+    choices: [
+      ["query", "Query Builder"],
+      ["manual", "Manual Data"],
+    ],
+    default: "manual",
+    locked: false,
+    required: false,
+    help_text: "Choose how data is provided to this module.",
+  };
+
+  // Gate the target array/object field so it only shows in Manual Data mode
+  fields[targetFieldIndex].visibility = {
+    controlling_field_path: "source",
+    controlling_value_regex: "manual",
+    operator: "EQUAL",
+  };
+
+  // Insert: source field → query_configs group → target field (with visibility)
   fields.splice(targetFieldIndex, 0, queryConfigGroup);
+  fields.splice(targetFieldIndex, 0, sourceField);
 
   return fields;
 };
